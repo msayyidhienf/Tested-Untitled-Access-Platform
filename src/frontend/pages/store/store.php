@@ -20,7 +20,7 @@ $genre  = $_GET['genre']  ?? '';
         <div class="game-card-img">
             <?php if (!empty($game['image'])): ?>
                 <img src="/uploads/games/<?= htmlspecialchars($game['image']) ?>" alt="<?= htmlspecialchars($game['title']) ?>" style="width:100%;height:100%;object-fit:cover">
-            <?php else: ?>
+            <?php else: ?>  
                 <span class="text-secondary" style="font-size:12px">No Image</span>
             <?php endif; ?>
         </div>

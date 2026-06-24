@@ -1,0 +1,63 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Game;
+use App\Models\Cart;
+use App\Models\Library;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+
+class GameController extends Controller
+{
+    public function index(Request $request)
+    {
+        $genre = $request->query('genre');
+        $filter = $request->query('filter');
+
+        if ($genre) {
+            return Inertia::render('store/genre', [
+                'genre' => $genre,
+                'games' => Game::where('genre', $genre)->orderByDesc('created_at')->get(),
+            ]);
+        }
+
+        if ($filter === 'new') {
+            return Inertia::render('store/new-releases', [
+                'games' => Game::orderByDesc('release_date')->limit(8)->get(),
+            ]);
+        }
+
+        if ($filter === 'sale') {
+            return Inertia::render('store/on-sale', [
+                'games' => Game::where('discount', '>', 0)->orderByDesc('discount')->get(),
+            ]);
+        }
+
+        if ($filter === 'free') {
+            return Inertia::render('store/free-to-play', [
+                'games' => Game::where('is_free', true)->get(),
+            ]);
+        }
+
+        return Inertia::render('store/index', [
+            'featuredGames' => Game::where('is_free', false)->orderByDesc('created_at')->limit(8)->get(),
+            'newReleases' => Game::orderByDesc('release_date')->limit(8)->get(),
+            'onSaleGames' => Game::where('discount', '>', 0)->orderByDesc('discount')->get(),
+            'freeGames' => Game::where('is_free', true)->get(),
+        ]);
+    }
+
+    public function show(Game $game)
+    {
+        $userId = auth()->id();
+
+        return Inertia::render('store/show', [
+            'game' => $game,
+            'images' => $game->images,
+            'reviews' => $game->reviews()->with('user:id,username')->latest('created_at')->get(),
+            'inCart' => $userId ? Cart::where('user_id', $userId)->where('game_id', $game->id)->exists() : false,
+            'inLibrary' => $userId ? Library::where('user_id', $userId)->where('game_id', $game->id)->exists() : false,
+        ]);
+    }
+}
