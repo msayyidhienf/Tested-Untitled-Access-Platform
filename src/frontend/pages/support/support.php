@@ -8,20 +8,20 @@ $q   = trim($_GET['q'] ?? '');
 if ($q && $tab === '') $tab = 'faq';
 
 // Load data per tab
-$currentArticle   = null;
-$categoryArticles = [];
-$popularArticles  = [];
+$currentArticle   = null; //dipakai untuk detail artikel
+$categoryArticles = []; //dipakai untuk daftar artikel per kategori
+$popularArticles  = []; //dipakai untuk halaman utama support (help-home.php)
 
-if ($tab === 'article') {
+if ($tab === 'article') { //unntuk mengambil ID artikel dari URL
     $artId = (int)($_GET['id'] ?? 0);
     try {
         $currentArticle = $artId ? getArticleById($artId) : null;
         if ($currentArticle) incrementArticleViews($artId);
-    } catch (Exception $e) { 
+    } catch (Exception $e) { //kalo terjadi error saat ambil artikel, set ke null aja biar gak crash
         $currentArticle = null; 
     }
 
-} elseif ($tab === 'articles') {
+} elseif ($tab === 'articles') { // kode ini untuk ambil kategori dari URL dan load artikel berdasarkan kategori tersebut   
     $artCat = $_GET['cat'] ?? '';
     try {
         $categoryArticles = $artCat ? getArticlesByCategory($artCat) : [];
