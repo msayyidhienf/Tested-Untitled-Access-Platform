@@ -38,10 +38,10 @@ class GameController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validateGame($request);
-        $data['image'] = $this->storeImage($request);
 
         $game = Game::create($data);
 
+        $game->update(['image' => $this->storeImage($request, $game->id)]);
         $this->storeScreenshots($request, $game->id);
 
         return redirect()->route('admin.games.index');
@@ -50,7 +50,7 @@ class GameController extends Controller
     public function update(Request $request, Game $game): RedirectResponse
     {
         $data = $this->validateGame($request);
-        $data['image'] = $this->storeImage($request, $game->image);
+        $data['image'] = $this->storeImage($request, $game->id, $game->image);
 
         $game->update($data);
 
@@ -61,9 +61,7 @@ class GameController extends Controller
 
     public function destroy(Game $game): RedirectResponse
     {
-        if ($game->image && File::exists(public_path('uploads/games/'.$game->image))) {
-            File::delete(public_path('uploads/games/'.$game->image));
-        }
+        File::deleteDirectory(public_path('uploads/games/'.$game->id));
 
         $game->delete();
 
@@ -77,8 +75,9 @@ class GameController extends Controller
             ->first();
 
         if ($image) {
-            if (File::exists(public_path('uploads/games/'.$image->filename))) {
-                File::delete(public_path('uploads/games/'.$image->filename));
+            $path = public_path('uploads/games/'.$image->game_id.'/screenshots/'.$image->filename);
+            if (File::exists($path)) {
+                File::delete($path);
             }
             $image->delete();
         }
@@ -106,20 +105,21 @@ class GameController extends Controller
         ]) + ['is_free' => $request->boolean('is_free')];
     }
 
-    private function storeImage(Request $request, ?string $oldImage = null): ?string
+    private function storeImage(Request $request, int $gameId, ?string $oldImage = null): ?string
     {
         if (! $request->hasFile('image')) {
             return $oldImage;
         }
 
-        File::ensureDirectoryExists(public_path('uploads/games'));
+        $dir = public_path('uploads/games/'.$gameId);
+        File::ensureDirectoryExists($dir);
 
         $file = $request->file('image');
-        $filename = uniqid('game_').'.'.$file->getClientOriginalExtension();
-        $file->move(public_path('uploads/games'), $filename);
+        $filename = uniqid('cover_').'.'.$file->getClientOriginalExtension();
+        $file->move($dir, $filename);
 
-        if ($oldImage && File::exists(public_path('uploads/games/'.$oldImage))) {
-            File::delete(public_path('uploads/games/'.$oldImage));
+        if ($oldImage && File::exists($dir.'/'.$oldImage)) {
+            File::delete($dir.'/'.$oldImage);
         }
 
         return $filename;
@@ -131,13 +131,14 @@ class GameController extends Controller
             return;
         }
 
-        File::ensureDirectoryExists(public_path('uploads/games'));
+        $dir = public_path('uploads/games/'.$gameId.'/screenshots');
+        File::ensureDirectoryExists($dir);
 
         $maxOrder = GameImage::where('game_id', $gameId)->max('sort_order') ?? 0;
 
         foreach ($request->file('screenshots') as $i => $file) {
             $filename = uniqid('shot_').'.'.$file->getClientOriginalExtension();
-            $file->move(public_path('uploads/games'), $filename);
+            $file->move($dir, $filename);
 
             GameImage::create([
                 'game_id' => $gameId,

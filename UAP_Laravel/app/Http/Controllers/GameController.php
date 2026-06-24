@@ -16,31 +16,39 @@ class GameController extends Controller
         $filter = $request->query('filter');
 
         if ($genre) {
-            return Inertia::render('store/genre', [
-                'genre' => $genre,
+            return Inertia::render('store/index', [
+                'mode' => 'filtered',
+                'filterTitle' => $genre,
                 'games' => Game::where('genre', $genre)->orderByDesc('created_at')->get(),
             ]);
         }
 
         if ($filter === 'new') {
-            return Inertia::render('store/new-releases', [
+            return Inertia::render('store/index', [
+                'mode' => 'filtered',
+                'filterTitle' => 'New Releases',
                 'games' => Game::orderByDesc('release_date')->limit(8)->get(),
             ]);
         }
 
         if ($filter === 'sale') {
-            return Inertia::render('store/on-sale', [
+            return Inertia::render('store/index', [
+                'mode' => 'filtered',
+                'filterTitle' => 'On Sale',
                 'games' => Game::where('discount', '>', 0)->orderByDesc('discount')->get(),
             ]);
         }
 
         if ($filter === 'free') {
-            return Inertia::render('store/free-to-play', [
+            return Inertia::render('store/index', [
+                'mode' => 'filtered',
+                'filterTitle' => 'Free to Play',
                 'games' => Game::where('is_free', true)->get(),
             ]);
         }
 
         return Inertia::render('store/index', [
+            'mode' => 'default',
             'featuredGames' => Game::where('is_free', false)->orderByDesc('created_at')->limit(8)->get(),
             'newReleases' => Game::orderByDesc('release_date')->limit(8)->get(),
             'onSaleGames' => Game::where('discount', '>', 0)->orderByDesc('discount')->get(),

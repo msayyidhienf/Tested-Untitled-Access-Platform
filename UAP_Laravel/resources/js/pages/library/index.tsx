@@ -174,7 +174,7 @@ export default function LibraryIndex({ tab, search, entries, recentlyPlayed, sta
                                     <Link href={`/game/${entry.game_id}`} className="block aspect-video" style={{ background: 'var(--uap-bg-deep)' }}>
                                         {entry.game.image && (
                                             <img
-                                                src={`/uploads/games/${entry.game.image}`}
+                                                src={`/uploads/games/${entry.game_id}/${entry.game.image}`}
                                                 alt={entry.game.title}
                                                 className="h-full w-full object-cover"
                                             />

@@ -50,7 +50,7 @@ export default function Profile() {
 
                             {auth.user!.avatar && (
                                 <img
-                                    src={`/assets/images/avatars/${auth.user!.avatar}`}
+                                    src={`/uploads/avatars/${auth.user!.id}/${auth.user!.avatar}`}
                                     alt="Avatar"
                                     className="h-20 w-20 rounded-full border-2 border-red-600 object-cover"
                                 />

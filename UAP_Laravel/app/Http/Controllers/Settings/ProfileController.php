@@ -37,14 +37,15 @@ class ProfileController extends Controller
         $user->fill($data);
 
         if ($request->hasFile('avatar')) {
-            File::ensureDirectoryExists(public_path('assets/images/avatars'));
+            $dir = public_path('uploads/avatars/'.$user->id);
+            File::ensureDirectoryExists($dir);
 
             $file = $request->file('avatar');
-            $filename = 'avatar_'.$user->id.'_'.time().'.'.$file->getClientOriginalExtension();
-            $file->move(public_path('assets/images/avatars'), $filename);
+            $filename = 'avatar_'.time().'.'.$file->getClientOriginalExtension();
+            $file->move($dir, $filename);
 
-            if ($user->avatar && $user->avatar !== 'default.png' && File::exists(public_path('assets/images/avatars/'.$user->avatar))) {
-                File::delete(public_path('assets/images/avatars/'.$user->avatar));
+            if ($user->avatar && File::exists($dir.'/'.$user->avatar)) {
+                File::delete($dir.'/'.$user->avatar);
             }
 
             $user->avatar = $filename;

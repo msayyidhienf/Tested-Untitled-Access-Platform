@@ -4,10 +4,13 @@ import { Head, Link } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
 interface StoreIndexProps {
-    featuredGames: Game[];
-    newReleases: Game[];
-    onSaleGames: Game[];
-    freeGames: Game[];
+    mode: 'default' | 'filtered';
+    filterTitle?: string;
+    games?: Game[];
+    featuredGames?: Game[];
+    newReleases?: Game[];
+    onSaleGames?: Game[];
+    freeGames?: Game[];
 }
 
 function formatPrice(price: string | number) {
@@ -48,7 +51,7 @@ function Hero({ games }: { games: Game[] }) {
                             className="uap-hero-slide-bg"
                             style={
                                 game.image
-                                    ? { backgroundImage: `url('/uploads/games/${game.image}')` }
+                                    ? { backgroundImage: `url('/uploads/games/${game.id}/${game.image}')` }
                                     : { background: GENRE_ACCENTS[game.genre ?? ''] ?? DEFAULT_ACCENT }
                             }
                         />
@@ -107,7 +110,7 @@ function GameCard({ game }: { game: Game }) {
 
     return (
         <Link href={`/game/${game.id}`} className="uap-card uap-game-card block p-3">
-            <div className="uap-game-card-img mb-2">{game.image && <img src={`/uploads/games/${game.image}`} alt={game.title} />}</div>
+            <div className="uap-game-card-img mb-2">{game.image && <img src={`/uploads/games/${game.id}/${game.image}`} alt={game.title} />}</div>
             <p className="uap-game-card-title">{game.title}</p>
             <p className="uap-game-card-genre mb-2">{game.genre}</p>
             <div className="flex items-center justify-between">
@@ -139,17 +142,29 @@ function GameSection({ title, games }: { title: string; games: Game[] }) {
     );
 }
 
-export default function StoreIndex({ featuredGames, newReleases, onSaleGames, freeGames }: StoreIndexProps) {
+export default function StoreIndex({ mode, filterTitle, games, featuredGames, newReleases, onSaleGames, freeGames }: StoreIndexProps) {
     return (
         <>
-            <Head title="Store" />
+            <Head title={mode === 'filtered' ? filterTitle ?? 'Store' : 'Store'} />
             <SiteLayout section="store">
-                <Hero games={featuredGames.slice(0, 3)} />
-                <div className="px-6 pb-8">
-                    <GameSection title="Featured & Recommended" games={featuredGames} />
-                    <GameSection title="New Releases" games={newReleases} />
-                    <GameSection title="Weekend Specials" games={onSaleGames} />
-                    <GameSection title="Free to Play" games={freeGames} />
+                {mode === 'default' && <Hero games={(featuredGames ?? []).slice(0, 3)} />}
+                <div className="px-6 py-8">
+                    {mode === 'filtered' ? (
+                        (games ?? []).length === 0 ? (
+                            <div className="uap-card p-16 text-center" style={{ color: 'var(--uap-text-secondary)' }}>
+                                No games found{filterTitle ? ` in ${filterTitle}` : ''}.
+                            </div>
+                        ) : (
+                            <GameSection title={filterTitle ?? 'Games'} games={games ?? []} />
+                        )
+                    ) : (
+                        <>
+                            <GameSection title="Featured & Recommended" games={featuredGames ?? []} />
+                            <GameSection title="New Releases" games={newReleases ?? []} />
+                            <GameSection title="Weekend Specials" games={onSaleGames ?? []} />
+                            <GameSection title="Free to Play" games={freeGames ?? []} />
+                        </>
+                    )}
                 </div>
             </SiteLayout>
         </>

@@ -82,7 +82,7 @@ export default function SiteHeader() {
                             >
                                 {auth.user.avatar ? (
                                     <img
-                                        src={`/assets/images/avatars/${auth.user.avatar}`}
+                                        src={`/uploads/avatars/${auth.user.id}/${auth.user.avatar}`}
                                         alt={auth.user.username}
                                         style={{ border: '2px solid rgba(184, 50, 50, 0.5)' }}
                                         className="h-[30px] w-[30px] object-cover"

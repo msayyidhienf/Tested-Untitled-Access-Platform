@@ -38,7 +38,12 @@ function formatPrice(value: number) {
 
 export default function GameShow({ game, images, reviews, inCart, inLibrary }: GameShowProps) {
     const { auth } = usePage<SharedData>().props;
-    const gallery = images.length > 0 ? images.map((i) => `/uploads/games/${i.filename}`) : game.image ? [`/uploads/games/${game.image}`] : [];
+    const gallery =
+        images.length > 0
+            ? images.map((i) => `/uploads/games/${game.id}/screenshots/${i.filename}`)
+            : game.image
+              ? [`/uploads/games/${game.id}/${game.image}`]
+              : [];
     const [activeImage, setActiveImage] = useState(0);
 
     const price = Number(game.price);

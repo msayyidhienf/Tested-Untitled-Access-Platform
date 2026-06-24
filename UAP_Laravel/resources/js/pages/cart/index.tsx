@@ -65,7 +65,7 @@ export default function CartIndex({ items, total }: CartIndexProps) {
                                         >
                                             {item.game.image && (
                                                 <img
-                                                    src={`/uploads/games/${item.game.image}`}
+                                                    src={`/uploads/games/${item.game_id}/${item.game.image}`}
                                                     alt={item.game.title}
                                                     className="h-full w-full object-cover"
                                                 />

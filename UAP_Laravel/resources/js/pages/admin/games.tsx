@@ -278,7 +278,9 @@ export default function AdminGames({ games, editGame, editScreenshots, saved }: 
                             <label className="mb-1 block text-xs" style={labelStyle}>
                                 Game Image
                             </label>
-                            {editGame?.image && <img src={`/uploads/games/${editGame.image}`} className="mb-2 h-24 w-full object-cover" />}
+                            {editGame?.image && (
+                                <img src={`/uploads/games/${editGame.id}/${editGame.image}`} className="mb-2 h-24 w-full object-cover" />
+                            )}
                             <input
                                 type="file"
                                 accept="image/*"
@@ -317,7 +319,7 @@ export default function AdminGames({ games, editGame, editScreenshots, saved }: 
                                 {editScreenshots.map((ss) => (
                                     <div key={ss.id} className="relative">
                                         <img
-                                            src={`/uploads/games/${ss.filename}`}
+                                            src={`/uploads/games/${editGame?.id}/screenshots/${ss.filename}`}
                                             style={{ border: '1px solid var(--uap-border)' }}
                                             className="h-22 w-full object-cover"
                                         />

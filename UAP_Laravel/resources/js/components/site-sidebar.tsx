@@ -158,7 +158,11 @@ export default function SiteSidebar({ section }: { section?: Section }) {
                 <div className="uap-sidebar-footer">
                     <Link href="/profile" className="uap-sidebar-user-row">
                         {auth.user.avatar ? (
-                            <img src={`/assets/images/avatars/${auth.user.avatar}`} alt={auth.user.username} className="uap-sidebar-avatar" />
+                            <img
+                                src={`/uploads/avatars/${auth.user.id}/${auth.user.avatar}`}
+                                alt={auth.user.username}
+                                className="uap-sidebar-avatar"
+                            />
                         ) : (
                             <span className="uap-sidebar-avatar">{auth.user.username.slice(0, 2).toUpperCase()}</span>
                         )}

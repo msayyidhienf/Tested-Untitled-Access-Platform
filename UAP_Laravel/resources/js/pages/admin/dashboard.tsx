@@ -155,7 +155,7 @@ export default function AdminDashboard({ stats, recentUsers, recentGames }: Dash
                             style={{ borderBottom: '1px solid var(--uap-border)' }}
                         >
                             <div className="h-8 w-12 flex-shrink-0 overflow-hidden" style={{ background: 'var(--uap-bg-deep)' }}>
-                                {g.image && <img src={`/uploads/games/${g.image}`} className="h-full w-full object-cover" />}
+                                {g.image && <img src={`/uploads/games/${g.id}/${g.image}`} className="h-full w-full object-cover" />}
                             </div>
                             <div className="min-w-0 flex-1">
                                 <div className="truncate text-sm font-medium">{g.title}</div>
