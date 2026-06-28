@@ -4,14 +4,21 @@ import { type SharedData } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 
+interface ReplyItem {
+    id: number;
+    content: string;
+    created_at: string;
+    user: { id: number; username: string; avatar: string | null };
+}
+
 interface PostItem {
     id: number;
     title: string;
     content: string;
     category: string;
     created_at: string;
-    user: { username: string; avatar: string | null };
-    replies_count: number;
+    user: { id: number; username: string; avatar: string | null };
+    replies: ReplyItem[];
 }
 
 interface FeedProps {
@@ -27,6 +34,99 @@ const inputStyle = {
     border: '1px solid var(--uap-border)',
     color: 'var(--uap-text-primary)',
 };
+
+function Avatar({ username }: { username: string }) {
+    return (
+        <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center text-xs font-bold" style={{ background: 'var(--uap-bg-hover)' }}>
+            {username.slice(0, 2).toUpperCase()}
+        </div>
+    );
+}
+
+function PostCard({ post, canReply }: { post: PostItem; canReply: boolean }) {
+    const [expanded, setExpanded] = useState(false);
+    const [replyContent, setReplyContent] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+
+    const submitReply: FormEventHandler = (e) => {
+        e.preventDefault();
+        if (!replyContent.trim()) return;
+
+        setSubmitting(true);
+        router.post(
+            `/community/posts/${post.id}/replies`,
+            { content: replyContent },
+            {
+                preserveScroll: true,
+                onSuccess: () => setReplyContent(''),
+                onFinish: () => setSubmitting(false),
+            },
+        );
+    };
+
+    return (
+        <div className="uap-card p-4">
+            <div className="mb-2 flex items-center gap-2">
+                <Avatar username={post.user.username} />
+                <Link href={`/profile/${post.user.id}`} className="text-sm font-semibold hover:underline">
+                    {post.user.username}
+                </Link>
+                <span className="uap-tag">{post.category}</span>
+            </div>
+            <h3 className="mb-1 font-semibold">{post.title}</h3>
+            <p className="text-sm" style={{ color: 'var(--uap-text-secondary)' }}>
+                {post.content}
+            </p>
+
+            <button
+                onClick={() => setExpanded((v) => !v)}
+                className="mt-2 text-xs hover:underline"
+                style={{ color: 'var(--uap-text-dim)' }}
+            >
+                {post.replies.length} repl{post.replies.length === 1 ? 'y' : 'ies'} {expanded ? '▲' : '▼'}
+            </button>
+
+            {expanded && (
+                <div className="mt-3 flex flex-col gap-3" style={{ borderTop: '1px solid var(--uap-border)', paddingTop: '12px' }}>
+                    {post.replies.length === 0 && (
+                        <p className="text-xs" style={{ color: 'var(--uap-text-dim)' }}>
+                            No replies yet.
+                        </p>
+                    )}
+                    {post.replies.map((reply) => (
+                        <div key={reply.id} className="flex gap-2">
+                            <Avatar username={reply.user.username} />
+                            <div>
+                                <Link href={`/profile/${reply.user.id}`} className="text-xs font-semibold hover:underline">
+                                    {reply.user.username}
+                                </Link>
+                                <p className="text-xs" style={{ color: 'var(--uap-text-secondary)' }}>
+                                    {reply.content}
+                                </p>
+                            </div>
+                        </div>
+                    ))}
+
+                    {canReply && (
+                        <form onSubmit={submitReply} className="flex gap-2">
+                            <input
+                                type="text"
+                                value={replyContent}
+                                onChange={(e) => setReplyContent(e.target.value)}
+                                placeholder="Write a reply..."
+                                style={inputStyle}
+                                className="flex-1 px-3 py-1.5 text-xs outline-none"
+                            />
+                            <button type="submit" disabled={submitting} className="uap-btn uap-btn-primary uap-btn-sm">
+                                Reply
+                            </button>
+                        </form>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
 
 export default function CommunityFeed({ posts, category, sidebar }: FeedProps) {
     const { auth } = usePage<SharedData>().props;
@@ -122,29 +222,11 @@ export default function CommunityFeed({ posts, category, sidebar }: FeedProps) {
                         <div className="flex flex-col gap-3">
                             {posts.length === 0 && (
                                 <div className="uap-card p-12 text-center text-sm" style={{ color: 'var(--uap-text-secondary)' }}>
-                                    Belum ada post.
+                                    No posts yet.
                                 </div>
                             )}
                             {posts.map((post) => (
-                                <div key={post.id} className="uap-card p-4">
-                                    <div className="mb-2 flex items-center gap-2">
-                                        <div
-                                            className="flex h-7 w-7 items-center justify-center text-xs font-bold"
-                                            style={{ background: 'var(--uap-bg-hover)' }}
-                                        >
-                                            {post.user.username.slice(0, 2).toUpperCase()}
-                                        </div>
-                                        <span className="text-sm font-semibold">{post.user.username}</span>
-                                        <span className="uap-tag">{post.category}</span>
-                                    </div>
-                                    <h3 className="mb-1 font-semibold">{post.title}</h3>
-                                    <p className="text-sm" style={{ color: 'var(--uap-text-secondary)' }}>
-                                        {post.content}
-                                    </p>
-                                    <div className="mt-2 text-xs" style={{ color: 'var(--uap-text-dim)' }}>
-                                        {post.replies_count} replies
-                                    </div>
-                                </div>
+                                <PostCard key={post.id} post={post} canReply={!!auth.user} />
                             ))}
                         </div>
                     </div>

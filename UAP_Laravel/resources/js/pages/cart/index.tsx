@@ -1,6 +1,6 @@
 import SiteLayout from '@/components/site-layout';
-import { type Game } from '@/types';
-import { Head, Link, router } from '@inertiajs/react';
+import { type Game, type SharedData } from '@/types';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 
 interface CartItem {
     id: number;
@@ -23,6 +23,8 @@ function itemPrice(game: Game) {
 }
 
 export default function CartIndex({ items, total }: CartIndexProps) {
+    const { flash } = usePage<SharedData>().props;
+
     const removeItem = (gameId: number) => {
         router.delete(`/cart/${gameId}`);
     };
@@ -43,10 +45,22 @@ export default function CartIndex({ items, total }: CartIndexProps) {
                     </Link>
                 </div>
 
+                {flash?.error && (
+                    <div
+                        className="mb-6 flex items-center justify-between p-4"
+                        style={{ background: 'rgba(184, 50, 50, 0.1)', border: '1px solid var(--uap-accent)' }}
+                    >
+                        <span style={{ color: 'var(--uap-text-primary)' }}>{flash.error}</span>
+                        <Link href="/wallet" className="uap-btn uap-btn-primary uap-btn-sm">
+                            Top Up Ucash
+                        </Link>
+                    </div>
+                )}
+
                 {items.length === 0 ? (
                     <div className="uap-card p-16 text-center">
                         <p className="mb-4" style={{ color: 'var(--uap-text-secondary)' }}>
-                            Cart kamu kosong.
+                            Your cart is empty.
                         </p>
                         <Link href="/store" className="uap-btn uap-btn-primary">
                             Browse Store
@@ -110,7 +124,7 @@ export default function CartIndex({ items, total }: CartIndexProps) {
                                 Checkout
                             </button>
                             <Link href="/store" className="uap-btn uap-btn-outline w-full">
-                                Lanjut Belanja
+                                Continue Shopping
                             </Link>
                         </div>
                     </div>

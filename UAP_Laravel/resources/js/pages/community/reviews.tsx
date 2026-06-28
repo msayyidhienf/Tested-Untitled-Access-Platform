@@ -1,7 +1,7 @@
 import CommunitySidebar, { CommunityTabs } from '@/components/community-sidebar';
 import SiteLayout from '@/components/site-layout';
 import { type SharedData } from '@/types';
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 
 interface ReviewItem {
@@ -9,7 +9,7 @@ interface ReviewItem {
     rating: number;
     content: string;
     created_at: string;
-    user: { username: string; avatar: string | null };
+    user: { id: number; username: string; avatar: string | null };
     game: { id: number; title: string };
 }
 
@@ -116,7 +116,7 @@ export default function CommunityReviews({ reviews, userGames, sidebar }: Review
                         <div className="flex flex-col gap-3">
                             {reviews.length === 0 && (
                                 <div className="uap-card p-12 text-center text-sm" style={{ color: 'var(--uap-text-secondary)' }}>
-                                    Belum ada review.
+                                    No reviews yet.
                                 </div>
                             )}
                             {reviews.map((review) => (
@@ -129,7 +129,9 @@ export default function CommunityReviews({ reviews, userGames, sidebar }: Review
                                             >
                                                 {review.user.username.slice(0, 2).toUpperCase()}
                                             </div>
-                                            <span className="text-sm font-semibold">{review.user.username}</span>
+                                            <Link href={`/profile/${review.user.id}`} className="text-sm font-semibold hover:underline">
+                                                {review.user.username}
+                                            </Link>
                                             <span className="text-xs" style={{ color: 'var(--uap-text-dim)' }}>
                                                 on {review.game.title}
                                             </span>

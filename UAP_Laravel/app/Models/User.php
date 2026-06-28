@@ -27,9 +27,11 @@ class User extends Authenticatable
         'email',
         'password',
         'avatar',
+        'banner',
         'bio',
         'country',
         'role',
+        'ucash_balance',
     ];
 
     /**
@@ -50,7 +52,18 @@ class User extends Authenticatable
     {
         return [
             'password' => 'hashed',
+            'ucash_balance' => 'decimal:2',
         ];
+    }
+
+    public function walletTransactions()
+    {
+        return $this->hasMany(WalletTransaction::class);
+    }
+
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class)->orderByDesc('created_at');
     }
 
     public function library()

@@ -4,7 +4,10 @@ import { type ReactNode } from 'react';
 const NAV_ITEMS = [
     { label: 'Dashboard', href: '/admin' },
     { label: 'Games', href: '/admin/games' },
+    { label: 'Orders', href: '/admin/orders' },
     { label: 'Users', href: '/admin/users' },
+    { label: 'Achievements', href: '/admin/achievements' },
+    { label: 'Support Articles', href: '/admin/articles' },
     { label: 'Support Tickets', href: '/admin/tickets' },
 ];
 
@@ -21,6 +24,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             >
                 <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--uap-border)' }}>
                     <Link href="/admin" className="flex items-center gap-2">
+                        <img src="/images/logo.png" alt="UAP" className="h-7 w-auto" />
                         <span style={{ ...fontMonda, color: 'var(--uap-accent)' }} className="text-lg font-extrabold">
                             UAP
                         </span>

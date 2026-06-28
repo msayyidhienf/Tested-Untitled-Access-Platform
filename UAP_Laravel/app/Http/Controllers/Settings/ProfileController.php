@@ -31,29 +31,38 @@ class ProfileController extends Controller
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
         $data = $request->validated();
-        unset($data['avatar']);
+        unset($data['avatar'], $data['banner']);
 
         $user = $request->user();
         $user->fill($data);
 
         if ($request->hasFile('avatar')) {
-            $dir = public_path('uploads/avatars/'.$user->id);
-            File::ensureDirectoryExists($dir);
+            $user->avatar = $this->storeProfileImage($request, 'avatar', 'uploads/avatars/'.$user->id, $user->avatar);
+        }
 
-            $file = $request->file('avatar');
-            $filename = 'avatar_'.time().'.'.$file->getClientOriginalExtension();
-            $file->move($dir, $filename);
-
-            if ($user->avatar && File::exists($dir.'/'.$user->avatar)) {
-                File::delete($dir.'/'.$user->avatar);
-            }
-
-            $user->avatar = $filename;
+        if ($request->hasFile('banner')) {
+            $user->banner = $this->storeProfileImage($request, 'banner', 'uploads/banners/'.$user->id, $user->banner);
         }
 
         $user->save();
 
         return to_route('profile.edit');
+    }
+
+    private function storeProfileImage(Request $request, string $field, string $relativeDir, ?string $oldFilename): string
+    {
+        $dir = public_path($relativeDir);
+        File::ensureDirectoryExists($dir);
+
+        $file = $request->file($field);
+        $filename = $field.'_'.time().'.'.$file->getClientOriginalExtension();
+        $file->move($dir, $filename);
+
+        if ($oldFilename && File::exists($dir.'/'.$oldFilename)) {
+            File::delete($dir.'/'.$oldFilename);
+        }
+
+        return $filename;
     }
 
     /**

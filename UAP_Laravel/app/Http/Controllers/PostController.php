@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Post;
+use App\Models\PostReply;
 use App\Models\User;
 use App\Models\Game;
 use App\Models\Review;
@@ -18,8 +19,7 @@ class PostController extends Controller
     {
         $category = $request->query('category');
 
-        $posts = Post::with('user:id,username,avatar')
-            ->withCount('replies')
+        $posts = Post::with(['user:id,username,avatar', 'replies.user:id,username,avatar'])
             ->when($category, fn ($q) => $q->where('category', $category))
             ->orderByDesc('created_at')
             ->get();
@@ -40,6 +40,21 @@ class PostController extends Controller
         ]);
 
         Post::create([
+            'user_id' => Auth::id(),
+            ...$data,
+        ]);
+
+        return back();
+    }
+
+    public function storeReply(Request $request, Post $post): RedirectResponse
+    {
+        $data = $request->validate([
+            'content' => 'required|string',
+        ]);
+
+        PostReply::create([
+            'post_id' => $post->id,
             'user_id' => Auth::id(),
             ...$data,
         ]);

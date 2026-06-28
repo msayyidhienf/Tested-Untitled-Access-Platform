@@ -7,6 +7,8 @@ use App\Models\Game;
 use App\Models\Library;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Notification;
+use App\Models\WalletTransaction;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -52,21 +54,26 @@ class CartController extends Controller
 
     public function checkout(): RedirectResponse
     {
-        $userId = Auth::id();
+        $user = Auth::user();
+        $userId = $user->id;
         $items = Cart::where('user_id', $userId)->with('game')->get();
 
         if ($items->isEmpty()) {
             return redirect()->route('cart.index');
         }
 
-        DB::transaction(function () use ($userId, $items) {
-            $total = $items->sum(function ($item) {
-                $price = $item->game->price;
-                return $item->game->discount > 0
-                    ? $price * (1 - $item->game->discount / 100)
-                    : $price;
-            });
+        $total = $items->sum(function ($item) {
+            $price = $item->game->price;
+            return $item->game->discount > 0
+                ? $price * (1 - $item->game->discount / 100)
+                : $price;
+        });
 
+        if ($user->ucash_balance < $total) {
+            return redirect()->route('cart.index')->with('error', 'Insufficient Ucash balance. Please top up first.');
+        }
+
+        DB::transaction(function () use ($user, $userId, $items, $total) {
             $order = Order::create([
                 'user_id' => $userId,
                 'total' => $total,
@@ -92,7 +99,27 @@ class CartController extends Controller
                 ]);
             }
 
+            $user->ucash_balance = $user->ucash_balance - $total;
+            $user->save();
+
+            WalletTransaction::create([
+                'user_id' => $userId,
+                'type' => 'purchase',
+                'amount' => $total,
+                'balance_after' => $user->ucash_balance,
+                'description' => 'Checkout '.$items->count().' game'.($items->count() > 1 ? 's' : ''),
+                'order_id' => $order->id,
+            ]);
+
             Cart::where('user_id', $userId)->delete();
+
+            Notification::create([
+                'user_id' => $userId,
+                'type' => 'purchase',
+                'title' => 'Purchase Complete',
+                'message' => 'You purchased '.$items->count().' game'.($items->count() > 1 ? 's' : '').' for Rp '.number_format($total, 0, ',', '.').'.',
+                'link' => '/library',
+            ]);
         });
 
         return redirect()->route('library.index');

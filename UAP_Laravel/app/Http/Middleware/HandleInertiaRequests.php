@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Cart;
+use App\Models\Notification;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -48,6 +49,17 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'cartCount' => Auth::check() ? Cart::where('user_id', Auth::id())->count() : 0,
+            'ucashBalance' => Auth::check() ? $request->user()->ucash_balance : null,
+            'notifications' => Auth::check()
+                ? Notification::where('user_id', Auth::id())->orderByDesc('created_at')->limit(15)->get()
+                : [],
+            'unreadNotificationCount' => Auth::check()
+                ? Notification::where('user_id', Auth::id())->whereNull('read_at')->count()
+                : 0,
+            'flash' => [
+                'status' => $request->session()->get('status'),
+                'error' => $request->session()->get('error'),
+            ],
         ]);
     }
 }

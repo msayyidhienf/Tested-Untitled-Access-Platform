@@ -273,7 +273,7 @@ export default function GameShow({ game, images, reviews, inCart, inLibrary }: G
                     <h2 className="uap-section-title">User Reviews</h2>
                     {reviews.length === 0 ? (
                         <p className="text-sm" style={{ color: 'var(--uap-text-secondary)' }}>
-                            Belum ada review untuk game ini.
+                            No reviews for this game yet.
                         </p>
                     ) : (
                         <div className="space-y-4">

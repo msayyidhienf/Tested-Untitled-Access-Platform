@@ -1,6 +1,7 @@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { type SharedData } from '@/types';
-import { Link, usePage } from '@inertiajs/react';
+import { type AppNotification, type SharedData } from '@/types';
+import { Link, router, usePage } from '@inertiajs/react';
+import { Bell, ChevronDown } from 'lucide-react';
 
 const NAV_ITEMS = [
     { label: 'Store', href: '/store', match: '/store' },
@@ -11,8 +12,32 @@ const NAV_ITEMS = [
 
 const fontMonda = { fontFamily: "'Monda', sans-serif" };
 
+function formatUcash(value: string | number) {
+    return `Rp ${Number(value).toLocaleString('id-ID')}`;
+}
+
+function timeAgo(value: string) {
+    const seconds = Math.floor((Date.now() - new Date(value).getTime()) / 1000);
+    if (seconds < 60) return 'just now';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+}
+
+function openNotification(notification: AppNotification) {
+    if (!notification.read_at) {
+        router.post(`/notifications/${notification.id}/read`, {}, { preserveScroll: true });
+    }
+    if (notification.link) {
+        router.visit(notification.link);
+    }
+}
+
 export default function SiteHeader() {
-    const { auth, cartCount } = usePage<SharedData>().props;
+    const { auth, cartCount, ucashBalance, notifications, unreadNotificationCount } = usePage<SharedData>().props;
     const currentUrl = usePage().url;
 
     return (
@@ -25,8 +50,8 @@ export default function SiteHeader() {
             }}
             className="sticky top-0 z-50 flex items-center gap-0 px-6"
         >
-            <Link href="/store" style={{ ...fontMonda, color: 'var(--uap-accent)' }} className="flex-shrink-0 text-lg font-extrabold">
-                UAP
+            <Link href="/store" className="flex flex-shrink-0 items-center">
+                <img src="/images/logo.png" alt="UAP" className="h-[34px] w-auto" />
             </Link>
 
             <nav className="ml-8 flex flex-1 items-center gap-0.5">
@@ -50,56 +75,154 @@ export default function SiteHeader() {
                 })}
             </nav>
 
-            <div className="ml-auto flex items-center gap-2.5">
-                <Link
-                    href="/cart"
+            <div className="ml-auto flex items-center gap-1.5">
+                <div
                     style={{
-                        ...fontMonda,
-                        color: currentUrl.startsWith('/cart') ? 'var(--uap-accent)' : 'var(--uap-text-secondary)',
+                        background: 'rgba(184, 50, 50, 0.06)',
+                        border: '1px solid rgba(184, 50, 50, 0.15)',
                     }}
-                    className="relative px-3.5 py-1.5 text-[13px] font-semibold hover:text-[var(--uap-text-primary)]"
+                    className="flex h-[38px] items-center"
                 >
-                    Cart
-                    {cartCount > 0 && (
-                        <span
-                            style={{ ...fontMonda, background: 'var(--uap-accent-red)' }}
-                            className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center px-1 text-[9px] font-bold text-white"
+                    <Link
+                        href="/cart"
+                        style={{
+                            ...fontMonda,
+                            color: currentUrl.startsWith('/cart') ? 'var(--uap-accent)' : 'var(--uap-text-secondary)',
+                        }}
+                        className="relative flex h-full items-center px-3.5 text-[13px] font-semibold hover:text-[var(--uap-text-primary)]"
+                    >
+                        Cart
+                        {cartCount > 0 && (
+                            <span
+                                style={{ ...fontMonda, background: 'var(--uap-accent-red)' }}
+                                className="absolute top-1 right-1.5 flex h-4 min-w-4 items-center justify-center px-1 text-[9px] font-bold text-white"
+                            >
+                                {cartCount}
+                            </span>
+                        )}
+                    </Link>
+
+                    {auth.user && ucashBalance !== null && (
+                        <Link
+                            href="/wallet"
+                            style={{
+                                ...fontMonda,
+                                color: currentUrl.startsWith('/wallet') ? 'var(--uap-accent)' : 'var(--uap-text-primary)',
+                                borderLeft: '1px solid rgba(184, 50, 50, 0.15)',
+                            }}
+                            className="flex h-full items-center px-3.5 text-[13px] font-semibold hover:text-[var(--uap-accent)]"
                         >
-                            {cartCount}
-                        </span>
+                            {formatUcash(ucashBalance)}
+                        </Link>
                     )}
-                </Link>
+                </div>
 
                 {auth.user ? (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <button
+                    <div className="ml-1 flex items-center gap-1.5">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <button
+                                    style={{
+                                        background: 'rgba(184, 50, 50, 0.06)',
+                                        border: '1px solid rgba(184, 50, 50, 0.15)',
+                                    }}
+                                    className="relative flex h-[38px] w-[38px] items-center justify-center"
+                                >
+                                    <Bell size={16} style={{ color: 'var(--uap-text-secondary)' }} />
+                                    {unreadNotificationCount > 0 && (
+                                        <span
+                                            style={{ ...fontMonda, background: 'var(--uap-accent-red)' }}
+                                            className="absolute top-0.5 right-0.5 flex h-4 min-w-4 items-center justify-center px-1 text-[9px] font-bold text-white"
+                                        >
+                                            {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
+                                        </span>
+                                    )}
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                                align="end"
+                                className="w-80"
                                 style={{
-                                    background: 'rgba(184, 50, 50, 0.06)',
-                                    border: '1px solid rgba(184, 50, 50, 0.15)',
+                                    ...fontMonda,
+                                    background: 'var(--uap-bg-card)',
+                                    border: '1px solid var(--uap-border)',
+                                    color: 'var(--uap-text-primary)',
                                 }}
-                                className="flex items-center gap-2 py-1 pl-1 pr-3"
                             >
-                                {auth.user.avatar ? (
-                                    <img
-                                        src={`/uploads/avatars/${auth.user.id}/${auth.user.avatar}`}
-                                        alt={auth.user.username}
-                                        style={{ border: '2px solid rgba(184, 50, 50, 0.5)' }}
-                                        className="h-[30px] w-[30px] object-cover"
-                                    />
-                                ) : (
-                                    <span
-                                        style={{ ...fontMonda, border: '2px solid rgba(184, 50, 50, 0.5)', background: 'var(--uap-bg-hover)' }}
-                                        className="flex h-[30px] w-[30px] items-center justify-center text-xs font-bold text-[var(--uap-text-primary)]"
-                                    >
-                                        {auth.user.username.slice(0, 2).toUpperCase()}
+                                <div className="flex items-center justify-between px-2 py-1.5">
+                                    <span className="text-xs font-semibold uppercase" style={{ color: 'var(--uap-text-dim)' }}>
+                                        Notifications
                                     </span>
+                                    {unreadNotificationCount > 0 && (
+                                        <button
+                                            onClick={() => router.post('/notifications/read-all', {}, { preserveScroll: true })}
+                                            className="text-xs hover:underline"
+                                            style={{ color: 'var(--uap-accent)' }}
+                                        >
+                                            Mark all read
+                                        </button>
+                                    )}
+                                </div>
+                                <DropdownMenuSeparator style={{ background: 'var(--uap-border)' }} />
+                                {notifications.length === 0 ? (
+                                    <p className="px-2 py-4 text-center text-xs" style={{ color: 'var(--uap-text-secondary)' }}>
+                                        No notifications yet.
+                                    </p>
+                                ) : (
+                                    <div className="max-h-96 overflow-y-auto">
+                                        {notifications.map((n) => (
+                                            <DropdownMenuItem
+                                                key={n.id}
+                                                onSelect={() => openNotification(n)}
+                                                className="flex-col items-start gap-0.5 focus:bg-[var(--uap-bg-hover)] focus:text-[var(--uap-text-primary)]"
+                                                style={{ background: n.read_at ? undefined : 'rgba(184, 50, 50, 0.06)' }}
+                                            >
+                                                <span className="text-sm font-semibold">{n.title}</span>
+                                                {n.message && (
+                                                    <span className="text-xs" style={{ color: 'var(--uap-text-secondary)' }}>
+                                                        {n.message}
+                                                    </span>
+                                                )}
+                                                <span className="text-[10px]" style={{ color: 'var(--uap-text-dim)' }}>
+                                                    {timeAgo(n.created_at)}
+                                                </span>
+                                            </DropdownMenuItem>
+                                        ))}
+                                    </div>
                                 )}
-                                <span style={{ ...fontMonda, color: 'var(--uap-text-primary)' }} className="text-[13px] font-semibold">
-                                    {auth.user.username}
-                                </span>
-                            </button>
-                        </DropdownMenuTrigger>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <button
+                                    style={{
+                                        background: 'rgba(184, 50, 50, 0.06)',
+                                        border: '1px solid rgba(184, 50, 50, 0.15)',
+                                    }}
+                                    className="flex items-center gap-1.5 py-1 pl-1 pr-2"
+                                >
+                                    {auth.user.avatar ? (
+                                        <img
+                                            src={`/uploads/avatars/${auth.user.id}/${auth.user.avatar}`}
+                                            alt={auth.user.username}
+                                            style={{ border: '2px solid rgba(184, 50, 50, 0.5)' }}
+                                            className="h-[30px] w-[30px] object-cover"
+                                        />
+                                    ) : (
+                                        <span
+                                            style={{ ...fontMonda, border: '2px solid rgba(184, 50, 50, 0.5)', background: 'var(--uap-bg-hover)' }}
+                                            className="flex h-[30px] w-[30px] items-center justify-center text-xs font-bold text-[var(--uap-text-primary)]"
+                                        >
+                                            {auth.user.username.slice(0, 2).toUpperCase()}
+                                        </span>
+                                    )}
+                                    <span style={{ ...fontMonda, color: 'var(--uap-text-primary)' }} className="text-[13px] font-semibold">
+                                        {auth.user.username}
+                                    </span>
+                                    <ChevronDown size={14} style={{ color: 'var(--uap-text-secondary)' }} />
+                                </button>
+                            </DropdownMenuTrigger>
                         <DropdownMenuContent
                             align="end"
                             className="w-48"
@@ -125,7 +248,8 @@ export default function SiteHeader() {
                                 </Link>
                             </DropdownMenuItem>
                         </DropdownMenuContent>
-                    </DropdownMenu>
+                        </DropdownMenu>
+                    </div>
                 ) : (
                     <div className="flex items-center gap-2">
                         <Link

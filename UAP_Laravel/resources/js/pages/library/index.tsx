@@ -159,7 +159,7 @@ export default function LibraryIndex({ tab, search, entries, recentlyPlayed, sta
                                 'No favorites yet. Click the star on any game.'
                             ) : (
                                 <>
-                                    Library kosong.{' '}
+                                    Library is empty.{' '}
                                     <Link href="/store" style={{ color: 'var(--uap-accent)' }} className="hover:underline">
                                         Browse the Store
                                     </Link>

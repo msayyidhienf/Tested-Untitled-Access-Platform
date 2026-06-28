@@ -100,6 +100,20 @@
     border-color: rgba(184, 50, 50, 0.25);
 }
 
+.uap-banner-fallback {
+    position: relative;
+    background: var(--uap-bg-deep);
+}
+.uap-banner-fallback::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(184, 50, 50, 1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(184, 50, 50, 1) 1px, transparent 1px);
+    background-size: 32px 32px;
+    opacity: 0.05;
+}
 .uap-game-card-img {
     width: 100%;
     aspect-ratio: 16 / 9;
@@ -196,7 +210,7 @@
     background: var(--uap-bg-void);
     min-height: 460px;
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     border: 1px solid var(--uap-border);
     box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(184, 50, 50, 0.08);
 }
@@ -225,6 +239,8 @@
     inset: 0;
     opacity: 0;
     transition: opacity 1s ease;
+    display: flex;
+    align-items: center;
 }
 .uap-hero-slide.active { opacity: 1; }
 .uap-hero-slide-bg {
@@ -241,7 +257,7 @@
 .uap-hero-content {
     position: relative;
     z-index: 2;
-    padding: 0 48px 48px;
+    padding: 0 48px;
     max-width: 560px;
     opacity: 0;
     transform: translateY(14px);

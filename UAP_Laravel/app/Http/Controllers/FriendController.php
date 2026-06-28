@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Friend;
+use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -11,12 +12,20 @@ class FriendController extends Controller
 {
     public function store(User $user): RedirectResponse
     {
-        $userId = Auth::id();
+        $viewer = Auth::user();
 
-        if ($user->id !== $userId) {
+        if ($user->id !== $viewer->id) {
             Friend::firstOrCreate([
-                'user_id' => $userId,
+                'user_id' => $viewer->id,
                 'friend_id' => $user->id,
+            ]);
+
+            Notification::create([
+                'user_id' => $user->id,
+                'type' => 'friend_request',
+                'title' => 'New Friend Request',
+                'message' => "{$viewer->username} sent you a friend request.",
+                'link' => "/profile/{$viewer->id}",
             ]);
         }
 
@@ -25,7 +34,8 @@ class FriendController extends Controller
 
     public function accept(User $user): RedirectResponse
     {
-        $userId = Auth::id();
+        $viewer = Auth::user();
+        $userId = $viewer->id;
 
         Friend::where('user_id', $user->id)
             ->where('friend_id', $userId)
@@ -36,6 +46,14 @@ class FriendController extends Controller
             'friend_id' => $user->id,
         ], [
             'status' => 'accepted',
+        ]);
+
+        Notification::create([
+            'user_id' => $user->id,
+            'type' => 'friend_accept',
+            'title' => 'Friend Request Accepted',
+            'message' => "{$viewer->username} accepted your friend request.",
+            'link' => "/profile/{$viewer->id}",
         ]);
 
         return back();

@@ -28,6 +28,7 @@ export default function Profile() {
         bio: auth.user!.bio ?? '',
         country: auth.user!.country ?? '',
         avatar: null as File | null,
+        banner: null as File | null,
     });
 
     const submit: FormEventHandler = (e) => {
@@ -45,6 +46,33 @@ export default function Profile() {
                     <HeadingSmall title="Profile information" description="Update your username and account details" />
 
                     <form onSubmit={submit} className="space-y-6" encType="multipart/form-data">
+                        <div className="grid gap-2">
+                            <Label htmlFor="banner">Profile Banner</Label>
+
+                            <div
+                                className="h-32 w-full overflow-hidden rounded-lg"
+                                style={{ background: 'var(--uap-bg-hover)' }}
+                            >
+                                {(auth.user!.banner || data.banner) && (
+                                    <img
+                                        src={data.banner ? URL.createObjectURL(data.banner) : `/uploads/banners/${auth.user!.id}/${auth.user!.banner}`}
+                                        alt="Banner"
+                                        className="h-full w-full object-cover"
+                                    />
+                                )}
+                            </div>
+
+                            <Input
+                                id="banner"
+                                type="file"
+                                accept="image/*"
+                                className="mt-1 block w-full"
+                                onChange={(e) => setData('banner', e.target.files?.[0] ?? null)}
+                            />
+
+                            <InputError className="mt-2" message={errors.banner} />
+                        </div>
+
                         <div className="grid gap-2">
                             <Label htmlFor="avatar">Avatar</Label>
 

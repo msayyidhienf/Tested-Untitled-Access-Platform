@@ -21,6 +21,7 @@ class ProfileUpdateRequest extends FormRequest
             'bio' => ['nullable', 'string'],
             'country' => ['nullable', 'string', 'max:50'],
             'avatar' => ['nullable', 'image', 'max:2048'],
+            'banner' => ['nullable', 'image', 'max:4096'],
 
             'email' => [
                 'required',

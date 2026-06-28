@@ -21,11 +21,25 @@ export interface NavItem {
     isActive?: boolean;
 }
 
+export interface AppNotification {
+    id: number;
+    type: string;
+    title: string;
+    message: string | null;
+    link: string | null;
+    read_at: string | null;
+    created_at: string;
+}
+
 export interface SharedData {
     name: string;
     quote: { message: string; author: string };
     auth: Auth;
     cartCount: number;
+    ucashBalance: string | null;
+    notifications: AppNotification[];
+    unreadNotificationCount: number;
+    flash: { status?: string | null; error?: string | null };
     [key: string]: unknown;
 }
 
@@ -34,6 +48,7 @@ export interface User {
     username: string;
     email: string;
     avatar: string | null;
+    banner: string | null;
     bio: string | null;
     country: string | null;
     role: 'user' | 'admin';

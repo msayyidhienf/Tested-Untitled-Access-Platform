@@ -28,7 +28,7 @@ export default function AdminTickets({ tickets }: TicketsProps) {
     };
 
     const deleteTicket = (ticket: TicketRow) => {
-        if (confirm('Hapus ticket ini?')) {
+        if (confirm('Delete this ticket?')) {
             router.post(`/admin/tickets/${ticket.id}/delete`);
         }
     };
@@ -49,12 +49,12 @@ export default function AdminTickets({ tickets }: TicketsProps) {
                     <thead>
                         <tr style={{ borderBottom: '1px solid var(--uap-border)', color: 'var(--uap-text-dim)' }} className="text-left text-xs">
                             <th className="px-4 py-3">ID</th>
-                            <th className="px-4 py-3">Nama</th>
+                            <th className="px-4 py-3">Name</th>
                             <th className="px-4 py-3">Email</th>
-                            <th className="px-4 py-3">Kategori</th>
-                            <th className="px-4 py-3">Pesan</th>
+                            <th className="px-4 py-3">Category</th>
+                            <th className="px-4 py-3">Message</th>
                             <th className="px-4 py-3">Status</th>
-                            <th className="px-4 py-3">Tanggal</th>
+                            <th className="px-4 py-3">Date</th>
                             <th className="px-4 py-3">Actions</th>
                         </tr>
                     </thead>
@@ -62,7 +62,7 @@ export default function AdminTickets({ tickets }: TicketsProps) {
                         {tickets.length === 0 && (
                             <tr>
                                 <td colSpan={8} className="px-4 py-10 text-center" style={{ color: 'var(--uap-text-dim)' }}>
-                                    Belum ada support ticket.
+                                    No support tickets yet.
                                 </td>
                             </tr>
                         )}
@@ -99,7 +99,7 @@ export default function AdminTickets({ tickets }: TicketsProps) {
                                             <option value="closed">Closed</option>
                                         </select>
                                         <button onClick={() => deleteTicket(ticket)} className="uap-btn uap-btn-danger uap-btn-sm">
-                                            Hapus
+                                            Delete
                                         </button>
                                     </div>
                                 </td>

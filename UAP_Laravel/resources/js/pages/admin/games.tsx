@@ -54,7 +54,7 @@ const inputStyle = {
 
 const labelStyle = { color: 'var(--uap-text-secondary)' };
 
-export default function AdminGames({ games, editGame, editScreenshots, saved }: GamesProps) {
+function GameForm({ editGame, editScreenshots }: { editGame: EditGame | null; editScreenshots: Screenshot[] }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         title: editGame?.title ?? '',
         description: editGame?.description ?? '',
@@ -83,12 +83,6 @@ export default function AdminGames({ games, editGame, editScreenshots, saved }: 
         });
     };
 
-    const deleteGame = (id: number) => {
-        if (confirm('Hapus game ini?')) {
-            router.post(`/admin/games/${id}/delete`);
-        }
-    };
-
     const deleteScreenshot = (imageId: number) => {
         if (confirm('Delete this screenshot?')) {
             router.post('/admin/games/screenshots/delete', { image_id: imageId, game_id: editGame?.id });
@@ -96,20 +90,6 @@ export default function AdminGames({ games, editGame, editScreenshots, saved }: 
     };
 
     return (
-        <AdminLayout>
-            <Head title="Admin Games" />
-
-            <h1 className="mb-6 text-2xl font-extrabold">Games</h1>
-
-            {saved && (
-                <div
-                    className="mb-4 p-3 text-sm"
-                    style={{ background: 'rgba(34,197,94,0.10)', border: '1px solid rgba(34,197,94,0.25)', color: 'var(--uap-accent-green)' }}
-                >
-                    Game updated successfully.
-                </div>
-            )}
-
             <div className="uap-card mb-6 p-6">
                 <h2 className="uap-section-title">{editGame ? 'Edit Game' : 'Add New Game'}</h2>
 
@@ -357,6 +337,32 @@ export default function AdminGames({ games, editGame, editScreenshots, saved }: 
                     </div>
                 </form>
             </div>
+    );
+}
+
+export default function AdminGames({ games, editGame, editScreenshots, saved }: GamesProps) {
+    const deleteGame = (id: number) => {
+        if (confirm('Delete this game?')) {
+            router.post(`/admin/games/${id}/delete`);
+        }
+    };
+
+    return (
+        <AdminLayout>
+            <Head title="Admin Games" />
+
+            <h1 className="mb-6 text-2xl font-extrabold">Games</h1>
+
+            {saved && (
+                <div
+                    className="mb-4 p-3 text-sm"
+                    style={{ background: 'rgba(34,197,94,0.10)', border: '1px solid rgba(34,197,94,0.25)', color: 'var(--uap-accent-green)' }}
+                >
+                    Game updated successfully.
+                </div>
+            )}
+
+            <GameForm key={editGame?.id ?? 'new'} editGame={editGame} editScreenshots={editScreenshots} />
 
             <div className="uap-card overflow-hidden">
                 <table className="w-full text-sm">

@@ -36,7 +36,7 @@ export default function CommunityGuides({ guides, sidebar }: GuidesProps) {
                         <div className="flex flex-col gap-3">
                             {guides.length === 0 && (
                                 <div className="uap-card p-12 text-center text-sm" style={{ color: 'var(--uap-text-secondary)' }}>
-                                    Belum ada guide.
+                                    No guides yet.
                                 </div>
                             )}
                             {guides.map((guide) => (
