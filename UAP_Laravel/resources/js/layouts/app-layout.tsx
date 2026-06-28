@@ -1,4 +1,4 @@
-import AppLayoutTemplate from '@/layouts/app/app-sidebar-layout';
+import SiteLayout from '@/components/site-layout';
 import { type BreadcrumbItem } from '@/types';
 
 interface AppLayoutProps {
@@ -6,8 +6,10 @@ interface AppLayoutProps {
     breadcrumbs?: BreadcrumbItem[];
 }
 
-export default ({ children, breadcrumbs, ...props }: AppLayoutProps) => (
-    <AppLayoutTemplate breadcrumbs={breadcrumbs} {...props}>
-        {children}
-    </AppLayoutTemplate>
-);
+export default function AppLayout({ children }: AppLayoutProps) {
+    return (
+        <SiteLayout>
+            <div className="px-6 py-8">{children}</div>
+        </SiteLayout>
+    );
+}

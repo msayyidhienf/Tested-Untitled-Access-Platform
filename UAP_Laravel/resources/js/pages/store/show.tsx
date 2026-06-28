@@ -36,6 +36,16 @@ function formatPrice(value: number) {
     return `Rp ${value.toLocaleString('id-ID')}`;
 }
 
+function reviewSentiment(avgRating: number, count: number): { label: string; color: string } {
+    if (count === 0) return { label: 'No Reviews Yet', color: 'var(--uap-text-dim)' };
+    if (avgRating >= 4.5) return { label: 'Overwhelmingly Positive', color: 'var(--uap-accent-green)' };
+    if (avgRating >= 4.0) return { label: 'Very Positive', color: 'var(--uap-accent-green)' };
+    if (avgRating >= 3.5) return { label: 'Mostly Positive', color: 'var(--uap-accent-green)' };
+    if (avgRating >= 3.0) return { label: 'Mixed', color: 'var(--uap-accent-gold)' };
+    if (avgRating >= 2.0) return { label: 'Mostly Negative', color: 'var(--uap-accent-red)' };
+    return { label: 'Overwhelmingly Negative', color: 'var(--uap-accent-red)' };
+}
+
 export default function GameShow({ game, images, reviews, inCart, inLibrary }: GameShowProps) {
     const { auth } = usePage<SharedData>().props;
     const gallery =
@@ -50,6 +60,7 @@ export default function GameShow({ game, images, reviews, inCart, inLibrary }: G
     const discounted = game.discount > 0 ? price * (1 - game.discount / 100) : null;
 
     const avgRating = reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0;
+    const sentiment = reviewSentiment(avgRating, reviews.length);
 
     return (
         <>
@@ -93,33 +104,82 @@ export default function GameShow({ game, images, reviews, inCart, inLibrary }: G
                         )}
                     </div>
 
-                    {/* Info + Reviews summary */}
+                    {/* Info panel — Steam-style summary */}
                     <div className="flex w-full flex-col gap-4 lg:w-[380px]">
-                        <div className="uap-card p-5">
-                            <div className="mb-3 space-y-2 text-sm" style={{ color: 'var(--uap-text-secondary)' }}>
-                                {game.release_date && (
-                                    <div className="flex justify-between">
-                                        <span>Release Date</span>
-                                        <span style={{ color: 'var(--uap-text-primary)' }}>
-                                            {new Date(game.release_date).toLocaleDateString('id-ID')}
-                                        </span>
-                                    </div>
-                                )}
-                                {game.developer && (
-                                    <div className="flex justify-between">
-                                        <span>Developer</span>
-                                        <span style={{ color: 'var(--uap-text-primary)' }}>{game.developer}</span>
-                                    </div>
-                                )}
-                                {game.publisher && (
-                                    <div className="flex justify-between">
-                                        <span>Publisher</span>
-                                        <span style={{ color: 'var(--uap-text-primary)' }}>{game.publisher}</span>
-                                    </div>
-                                )}
+                        <div className="uap-card flex h-full flex-col p-5">
+                            {/* Cover image */}
+                            {game.image && (
+                                <div className="mb-4 aspect-video overflow-hidden" style={{ background: 'var(--uap-bg-deep)' }}>
+                                    <img
+                                        src={`/uploads/games/${game.id}/${game.image}`}
+                                        alt={game.title}
+                                        className="h-full w-full object-cover"
+                                    />
+                                </div>
+                            )}
+
+                            {/* Short description */}
+                            {game.description && (
+                                <p className="mb-4 text-sm leading-relaxed" style={{ color: 'var(--uap-text-secondary)' }}>
+                                    {game.description.length > 220 ? `${game.description.slice(0, 220)}...` : game.description}
+                                </p>
+                            )}
+
+                            {/* Reviews summary */}
+                            <div className="mb-4 grid grid-cols-[110px_1fr] gap-y-1.5 text-xs" style={{ color: 'var(--uap-text-dim)' }}>
+                                <span className="uppercase tracking-wide">Recent Reviews:</span>
+                                <span style={{ color: sentiment.color }}>
+                                    {sentiment.label} {reviews.length > 0 && `(${reviews.length})`}
+                                </span>
+                                <span className="uppercase tracking-wide">All Reviews:</span>
+                                <span style={{ color: sentiment.color }}>
+                                    {sentiment.label} {reviews.length > 0 && `(${reviews.length})`}
+                                </span>
                             </div>
 
-                            <div className="mb-3 pt-3" style={{ borderTop: '1px solid var(--uap-border)' }}>
+                            <div style={{ borderTop: '1px solid var(--uap-border)' }} className="mb-4 pt-4">
+                                <div className="grid grid-cols-[110px_1fr] gap-y-1.5 text-xs" style={{ color: 'var(--uap-text-dim)' }}>
+                                    {game.release_date && (
+                                        <>
+                                            <span className="uppercase tracking-wide">Release Date:</span>
+                                            <span style={{ color: 'var(--uap-text-primary)' }}>
+                                                {new Date(game.release_date).toLocaleDateString('id-ID', {
+                                                    day: 'numeric',
+                                                    month: 'short',
+                                                    year: 'numeric',
+                                                })}
+                                            </span>
+                                        </>
+                                    )}
+                                    {game.developer && (
+                                        <>
+                                            <span className="uppercase tracking-wide">Developer:</span>
+                                            <span style={{ color: 'var(--uap-accent-blue)' }}>{game.developer}</span>
+                                        </>
+                                    )}
+                                    {game.publisher && (
+                                        <>
+                                            <span className="uppercase tracking-wide">Publisher:</span>
+                                            <span style={{ color: 'var(--uap-accent-blue)' }}>{game.publisher}</span>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Tags */}
+                            <div className="mb-4" style={{ borderTop: '1px solid var(--uap-border)', paddingTop: '16px' }}>
+                                <div className="mb-2 text-xs" style={{ color: 'var(--uap-text-dim)' }}>
+                                    Popular tags for this game:
+                                </div>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {game.genre && <span className="uap-tag">{game.genre}</span>}
+                                    {game.is_free && <span className="uap-tag uap-tag-green">Free to Play</span>}
+                                    {game.discount > 0 && <span className="uap-tag uap-tag-danger">On Sale</span>}
+                                </div>
+                            </div>
+
+                            {/* Price + CTA */}
+                            <div className="mt-auto mb-3 pt-3" style={{ borderTop: '1px solid var(--uap-border)' }}>
                                 {game.is_free ? (
                                     <span className="text-xl font-extrabold" style={{ color: 'var(--uap-accent-green)' }}>
                                         Free to Play
@@ -154,26 +214,6 @@ export default function GameShow({ game, images, reviews, inCart, inLibrary }: G
                                 <Link href="/login" className="uap-btn uap-btn-outline block w-full text-center">
                                     Login to Buy
                                 </Link>
-                            )}
-                        </div>
-
-                        <div className="uap-card p-5">
-                            <div className="mb-2 text-xs tracking-wide uppercase" style={{ color: 'var(--uap-text-dim)' }}>
-                                User Reviews
-                            </div>
-                            {reviews.length > 0 ? (
-                                <>
-                                    <div className="text-3xl font-extrabold">
-                                        {avgRating.toFixed(1)} <span className="text-sm" style={{ color: 'var(--uap-text-dim)' }}>/ 5</span>
-                                    </div>
-                                    <div className="text-sm" style={{ color: 'var(--uap-text-secondary)' }}>
-                                        {reviews.length} review{reviews.length !== 1 ? 's' : ''}
-                                    </div>
-                                </>
-                            ) : (
-                                <div className="text-sm" style={{ color: 'var(--uap-text-secondary)' }}>
-                                    Be the first to review this game.
-                                </div>
                             )}
                         </div>
                     </div>

@@ -39,68 +39,73 @@ function Hero({ games }: { games: Game[] }) {
 
     if (games.length === 0) return null;
 
-    return (
-        <div className="uap-hero mb-12">
-            {games.map((game, i) => {
-                const discountedPrice = game.discount > 0 ? Number(game.price) * (1 - game.discount / 100) : Number(game.price);
-                const eyebrow = i === 0 ? 'Featured Game' : game.discount > 0 ? `Special Offer — -${game.discount}% OFF` : 'Recommended';
+    const activeGame = games[active];
+    const activeEyebrow =
+        active === 0 ? 'Featured Game' : activeGame.discount > 0 ? `Special Offer — -${activeGame.discount}% OFF` : 'Recommended';
 
-                return (
-                    <div key={game.id} className={`uap-hero-slide ${i === active ? 'active' : ''}`}>
-                        <div
-                            className="uap-hero-slide-bg"
-                            style={
-                                game.image
-                                    ? { backgroundImage: `url('/uploads/games/${game.id}/${game.image}')` }
-                                    : { background: GENRE_ACCENTS[game.genre ?? ''] ?? DEFAULT_ACCENT }
-                            }
-                        />
-                        <div className="uap-hero-slide-overlay" />
-                        <div className="uap-hero-content">
-                            <span className="uap-hero-eyebrow">{eyebrow}</span>
-                            <h1 className="uap-hero-title">{game.title}</h1>
-                            <p className="uap-hero-desc">
-                                {(game.description ?? 'Discover this amazing game on UAP.').slice(0, 130)}
-                                {(game.description?.length ?? 0) > 130 ? '...' : ''}
-                            </p>
-                            <div className="uap-hero-meta">
-                                <span className="uap-hero-genre-tag">{game.genre}</span>
-                                {game.discount > 0 && <span className="uap-hero-discount-tag">-{game.discount}% OFF</span>}
-                            </div>
-                            <div className="uap-hero-actions">
-                                {game.is_free ? (
-                                    <>
-                                        <Link href={`/game/${game.id}`} className="uap-btn uap-btn-primary">
-                                            Play Free
-                                        </Link>
-                                        <span className="uap-hero-price" style={{ color: 'var(--uap-accent-green)' }}>
-                                            FREE TO PLAY
-                                        </span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Link href={`/game/${game.id}`} className="uap-btn uap-btn-primary">
-                                            View Game
-                                        </Link>
-                                        <div className="uap-hero-price-block">
-                                            {game.discount > 0 && <span className="uap-hero-price-was">{formatPrice(game.price)}</span>}
-                                            <span className="uap-hero-price">{formatPrice(discountedPrice)}</span>
-                                        </div>
-                                    </>
-                                )}
+    return (
+        <div className="mb-12">
+            <span className="uap-hero-eyebrow-above">{activeEyebrow}</span>
+            <div className="uap-hero">
+                {games.map((game, i) => {
+                    const discountedPrice = game.discount > 0 ? Number(game.price) * (1 - game.discount / 100) : Number(game.price);
+
+                    return (
+                        <div key={game.id} className={`uap-hero-slide ${i === active ? 'active' : ''}`}>
+                            <div
+                                className="uap-hero-slide-bg"
+                                style={
+                                    game.image
+                                        ? { backgroundImage: `url('/uploads/games/${game.id}/${game.image}')` }
+                                        : { background: GENRE_ACCENTS[game.genre ?? ''] ?? DEFAULT_ACCENT }
+                                }
+                            />
+                            <div className="uap-hero-slide-overlay" />
+                            <div className="uap-hero-content">
+                                <h1 className="uap-hero-title">{game.title}</h1>
+                                <p className="uap-hero-desc">
+                                    {(game.description ?? 'Discover this amazing game on UAP.').slice(0, 130)}
+                                    {(game.description?.length ?? 0) > 130 ? '...' : ''}
+                                </p>
+                                <div className="uap-hero-meta">
+                                    <span className="uap-hero-genre-tag">{game.genre}</span>
+                                    {game.discount > 0 && <span className="uap-hero-discount-tag">-{game.discount}% OFF</span>}
+                                </div>
+                                <div className="uap-hero-actions">
+                                    {game.is_free ? (
+                                        <>
+                                            <Link href={`/game/${game.id}`} className="uap-btn uap-btn-primary">
+                                                Play Free
+                                            </Link>
+                                            <span className="uap-hero-price" style={{ color: 'var(--uap-accent-green)' }}>
+                                                FREE TO PLAY
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Link href={`/game/${game.id}`} className="uap-btn uap-btn-primary">
+                                                View Game
+                                            </Link>
+                                            <div className="uap-hero-price-block">
+                                                {game.discount > 0 && <span className="uap-hero-price-was">{formatPrice(game.price)}</span>}
+                                                <span className="uap-hero-price">{formatPrice(discountedPrice)}</span>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                );
-            })}
+                    );
+                })}
 
-            {games.length > 1 && (
-                <div className="uap-hero-nav">
-                    {games.map((game, i) => (
-                        <button key={game.id} onClick={() => setActive(i)} className={`uap-hero-dot ${i === active ? 'active' : ''}`} />
-                    ))}
-                </div>
-            )}
+                {games.length > 1 && (
+                    <div className="uap-hero-nav">
+                        {games.map((game, i) => (
+                            <button key={game.id} onClick={() => setActive(i)} className={`uap-hero-dot ${i === active ? 'active' : ''}`} />
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
@@ -147,7 +152,11 @@ export default function StoreIndex({ mode, filterTitle, games, featuredGames, ne
         <>
             <Head title={mode === 'filtered' ? filterTitle ?? 'Store' : 'Store'} />
             <SiteLayout section="store">
-                {mode === 'default' && <Hero games={(featuredGames ?? []).slice(0, 3)} />}
+                {mode === 'default' && (
+                    <div className="px-6 pt-6">
+                        <Hero games={(featuredGames ?? []).slice(0, 3)} />
+                    </div>
+                )}
                 <div className="px-6 py-8">
                     {mode === 'filtered' ? (
                         (games ?? []).length === 0 ? (
