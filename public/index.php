@@ -1,31 +1,17 @@
 <?php
-require_once __DIR__ . '/../src/backend/helpers/auth.php';
-startSession();
 
-require_once __DIR__ . '/../src/backend/helpers/actions.php';
-require_once __DIR__ . '/../src/backend/helpers/router.php';
-require_once __DIR__ . '/../src/backend/models/Support.php';
+use Illuminate\Http\Request;
 
-// HANDLE SUPPORT TICKET BEFORE HTML OUTPUT
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'send_ticket') {
-    $name     = trim($_POST['ticket_name'] ?? '');
-    $email    = trim($_POST['ticket_email'] ?? '');
-    $category = trim($_POST['ticket_category'] ?? '');
-    $message  = trim($_POST['ticket_message'] ?? '');
+define('LARAVEL_START', microtime(true));
 
-    if (!empty($name) && !empty($email) && !empty($category) && !empty($message) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $uid = isLoggedIn() ? getCurrentUser()['id'] : null;
-
-        createTicket($uid, $name, $email, $category, $message);
-
-        header('Location: /?page=support&tab=contact&sent=1');
-        exit;
-    }
+// Determine if the application is in maintenance mode...
+if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
+    require $maintenance;
 }
-?>
 
-<?php include __DIR__ . '/../src/frontend/layouts/header.php'; ?>
+// Register the Composer autoloader...
+require __DIR__.'/../vendor/autoload.php';
 
-<?php include $view_path; ?>
-
-<?php include __DIR__ . '/../src/frontend/layouts/footer.php'; ?>
+// Bootstrap Laravel and handle the request...
+(require_once __DIR__.'/../bootstrap/app.php')
+    ->handleRequest(Request::capture());
