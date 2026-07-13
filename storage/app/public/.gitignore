@@ -1,2 +1,4 @@
 *
 !.gitignore
+!uploads_seed/
+!uploads_seed/**
