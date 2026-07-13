@@ -1,22 +1,44 @@
 import SiteLayout from '@/components/site-layout';
+import { requestSnapToken } from '@/lib/midtrans';
 import { type SharedData } from '@/types';
-import { Head, useForm, usePage } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { Head, router, usePage } from '@inertiajs/react';
+import { FormEventHandler, useState } from 'react';
+
+type TransactionType = 'topup' | 'purchase' | 'refund' | 'adjustment';
 
 interface WalletTransaction {
     id: number;
-    type: 'topup' | 'purchase' | 'refund';
+    reference_no: string;
+    type: TransactionType;
     amount: string;
     balance_after: string;
     description: string | null;
     created_at: string;
 }
 
+interface Paginated<T> {
+    data: T[];
+    current_page: number;
+    last_page: number;
+    links: { url: string | null; label: string; active: boolean }[];
+}
+
 interface WalletIndexProps {
     balance: string;
     presets: number[];
-    transactions: WalletTransaction[];
+    type: string;
+    transactions: Paginated<WalletTransaction>;
 }
+
+const CREDIT_TYPES: TransactionType[] = ['topup', 'refund'];
+
+const FILTERS: { key: string; label: string }[] = [
+    { key: '', label: 'All' },
+    { key: 'topup', label: 'Top Up' },
+    { key: 'purchase', label: 'Purchase' },
+    { key: 'refund', label: 'Refund' },
+    { key: 'adjustment', label: 'Adjustment' },
+];
 
 function formatUcash(value: string | number) {
     return `Rp ${Number(value).toLocaleString('id-ID')}`;
@@ -32,19 +54,67 @@ function formatDate(value: string) {
     });
 }
 
-const TYPE_LABEL: Record<WalletTransaction['type'], string> = {
+const TYPE_LABEL: Record<TransactionType, string> = {
     topup: 'Top Up',
     purchase: 'Purchase',
     refund: 'Refund',
+    adjustment: 'Adjustment',
 };
 
-export default function WalletIndex({ balance, presets, transactions }: WalletIndexProps) {
-    const { flash } = usePage<SharedData>().props;
-    const { data, setData, post, processing, errors } = useForm<{ amount: number | '' }>({ amount: '' });
+function isCredit(tx: WalletTransaction) {
+    if (tx.type === 'adjustment') {
+        return Number(tx.amount) >= 0;
+    }
 
-    const submitTopUp: FormEventHandler = (e) => {
+    return CREDIT_TYPES.includes(tx.type);
+}
+
+export default function WalletIndex({ balance, presets, type, transactions }: WalletIndexProps) {
+    const { flash } = usePage<SharedData>().props;
+    const [amount, setAmount] = useState<number | ''>('');
+    const [processing, setProcessing] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [status, setStatus] = useState<string | null>(null);
+
+    const submitTopUp: FormEventHandler = async (e) => {
         e.preventDefault();
-        post('/wallet/topup');
+
+        if (!amount) {
+            return;
+        }
+
+        setProcessing(true);
+        setError(null);
+        setStatus(null);
+
+        try {
+            const snapToken = await requestSnapToken(Number(amount));
+
+            window.snap.pay(snapToken, {
+                onSuccess: () => {
+                    setStatus('Payment successful! Your Ucash balance will update shortly.');
+                    setAmount('');
+                    setTimeout(() => router.reload({ only: ['balance', 'transactions'] }), 1500);
+                },
+                onPending: () => {
+                    setStatus('Payment pending. Your balance will update once payment is confirmed.');
+                },
+                onError: () => {
+                    setError('Payment failed. Please try again.');
+                },
+                onClose: () => {
+                    setProcessing(false);
+                },
+            });
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to start payment.');
+        } finally {
+            setProcessing(false);
+        }
+    };
+
+    const filterBy = (key: string) => {
+        router.get('/wallet', key ? { type: key } : {}, { preserveState: true });
     };
 
     return (
@@ -54,9 +124,15 @@ export default function WalletIndex({ balance, presets, transactions }: WalletIn
                 <div className="px-6 py-8">
                     <h1 className="mb-6 text-2xl font-extrabold">Ucash Wallet</h1>
 
-                    {flash?.status && (
+                    {(flash?.status || status) && (
                         <div className="mb-6 p-4" style={{ background: 'rgba(46, 160, 67, 0.1)', border: '1px solid var(--uap-accent-green)' }}>
-                            <span style={{ color: 'var(--uap-text-primary)' }}>{flash.status}</span>
+                            <span style={{ color: 'var(--uap-text-primary)' }}>{status ?? flash?.status}</span>
+                        </div>
+                    )}
+
+                    {error && (
+                        <div className="mb-6 p-4" style={{ background: 'rgba(248, 81, 73, 0.1)', border: '1px solid var(--uap-accent-red)' }}>
+                            <span style={{ color: 'var(--uap-text-primary)' }}>{error}</span>
                         </div>
                     )}
 
@@ -71,10 +147,10 @@ export default function WalletIndex({ balance, presets, transactions }: WalletIn
                                         <button
                                             key={preset}
                                             type="button"
-                                            onClick={() => setData('amount', preset)}
+                                            onClick={() => setAmount(preset)}
                                             className="uap-btn uap-btn-outline"
                                             style={
-                                                data.amount === preset
+                                                amount === preset
                                                     ? { borderColor: 'var(--uap-accent)', color: 'var(--uap-text-primary)' }
                                                     : undefined
                                             }
@@ -93,8 +169,8 @@ export default function WalletIndex({ balance, presets, transactions }: WalletIn
                                             type="number"
                                             min={1000}
                                             max={10000000}
-                                            value={data.amount}
-                                            onChange={(e) => setData('amount', e.target.value === '' ? '' : Number(e.target.value))}
+                                            value={amount}
+                                            onChange={(e) => setAmount(e.target.value === '' ? '' : Number(e.target.value))}
                                             placeholder="Ucash amount"
                                             className="w-full p-3"
                                             style={{
@@ -103,9 +179,8 @@ export default function WalletIndex({ balance, presets, transactions }: WalletIn
                                                 color: 'var(--uap-text-primary)',
                                             }}
                                         />
-                                        {errors.amount && <p className="mt-1 text-sm text-red-400">{errors.amount}</p>}
                                     </div>
-                                    <button type="submit" disabled={processing || !data.amount} className="uap-btn uap-btn-primary w-full">
+                                    <button type="submit" disabled={processing || !amount} className="uap-btn uap-btn-primary w-full">
                                         {processing ? 'Processing...' : 'Top Up Now'}
                                     </button>
                                 </form>
@@ -113,13 +188,27 @@ export default function WalletIndex({ balance, presets, transactions }: WalletIn
 
                             {/* Transaction history */}
                             <div className="uap-card p-6">
-                                <h2 className="uap-section-title">Transaction History</h2>
+                                <div className="mb-4 flex items-center justify-between">
+                                    <h2 className="uap-section-title mb-0">Transaction History</h2>
+                                </div>
 
-                                {transactions.length === 0 ? (
+                                <div className="mb-4 flex flex-wrap gap-2">
+                                    {FILTERS.map((f) => (
+                                        <button
+                                            key={f.key}
+                                            onClick={() => filterBy(f.key)}
+                                            className={`uap-tag ${type === f.key ? 'uap-tag-accent' : ''}`}
+                                        >
+                                            {f.label}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {transactions.data.length === 0 ? (
                                     <p style={{ color: 'var(--uap-text-secondary)' }}>No transactions yet.</p>
                                 ) : (
                                     <div className="flex flex-col gap-2">
-                                        {transactions.map((tx) => (
+                                        {transactions.data.map((tx) => (
                                             <div
                                                 key={tx.id}
                                                 className="flex items-center justify-between p-3"
@@ -130,17 +219,32 @@ export default function WalletIndex({ balance, presets, transactions }: WalletIn
                                                         {tx.description ?? TYPE_LABEL[tx.type]}
                                                     </p>
                                                     <p className="text-xs" style={{ color: 'var(--uap-text-secondary)' }}>
-                                                        {formatDate(tx.created_at)}
+                                                        {formatDate(tx.created_at)} · {tx.reference_no}
                                                     </p>
                                                 </div>
                                                 <span
                                                     className="font-bold"
-                                                    style={{ color: tx.type === 'topup' ? 'var(--uap-accent-green)' : 'var(--uap-accent-red)' }}
+                                                    style={{ color: isCredit(tx) ? 'var(--uap-accent-green)' : 'var(--uap-accent-red)' }}
                                                 >
-                                                    {tx.type === 'topup' ? '+' : '-'}
-                                                    {formatUcash(tx.amount)}
+                                                    {isCredit(tx) ? '+' : '-'}
+                                                    {formatUcash(Math.abs(Number(tx.amount)))}
                                                 </span>
                                             </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {transactions.last_page > 1 && (
+                                    <div className="mt-4 flex flex-wrap gap-1">
+                                        {transactions.links.map((link, i) => (
+                                            <button
+                                                key={i}
+                                                disabled={!link.url}
+                                                onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
+                                                className={`uap-tag ${link.active ? 'uap-tag-accent' : ''}`}
+                                                style={!link.url ? { opacity: 0.4, cursor: 'default' } : undefined}
+                                                dangerouslySetInnerHTML={{ __html: link.label }}
+                                            />
                                         ))}
                                     </div>
                                 )}

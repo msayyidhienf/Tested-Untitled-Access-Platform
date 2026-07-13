@@ -50,6 +50,10 @@ class HandleInertiaRequests extends Middleware
             ],
             'cartCount' => Auth::check() ? Cart::where('user_id', Auth::id())->count() : 0,
             'ucashBalance' => Auth::check() ? $request->user()->ucash_balance : null,
+            'midtrans' => [
+                'clientKey' => config('midtrans.client_key'),
+                'isProduction' => (bool) config('midtrans.is_production'),
+            ],
             'notifications' => Auth::check()
                 ? Notification::where('user_id', Auth::id())->orderByDesc('created_at')->limit(15)->get()
                 : [],

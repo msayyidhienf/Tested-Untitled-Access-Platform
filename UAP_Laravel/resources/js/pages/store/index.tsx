@@ -7,6 +7,7 @@ interface StoreIndexProps {
     mode: 'default' | 'filtered';
     filterTitle?: string;
     games?: Game[];
+    heroGames?: Game[];
     featuredGames?: Game[];
     newReleases?: Game[];
     onSaleGames?: Game[];
@@ -147,14 +148,16 @@ function GameSection({ title, games }: { title: string; games: Game[] }) {
     );
 }
 
-export default function StoreIndex({ mode, filterTitle, games, featuredGames, newReleases, onSaleGames, freeGames }: StoreIndexProps) {
+export default function StoreIndex({ mode, filterTitle, games, heroGames, featuredGames, newReleases, onSaleGames, freeGames }: StoreIndexProps) {
+    const heroSlides = heroGames && heroGames.length > 0 ? heroGames : (featuredGames ?? []).slice(0, 3);
+
     return (
         <>
             <Head title={mode === 'filtered' ? filterTitle ?? 'Store' : 'Store'} />
             <SiteLayout section="store">
                 {mode === 'default' && (
                     <div className="px-6 pt-6">
-                        <Hero games={(featuredGames ?? []).slice(0, 3)} />
+                        <Hero games={heroSlides} />
                     </div>
                 )}
                 <div className="px-6 py-8">

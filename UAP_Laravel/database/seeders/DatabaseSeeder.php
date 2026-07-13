@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             AchievementSeeder::class,
             SupportArticleSeeder::class,
             UserSeeder::class,
+            FriendSeeder::class,
             LibrarySeeder::class,
             PostSeeder::class,
             ReviewSeeder::class,

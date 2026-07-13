@@ -9,6 +9,8 @@ interface GameRow {
     price: string;
     discount: number;
     is_free: boolean;
+    is_hero: boolean;
+    hero_order: number;
 }
 
 interface EditGame {
@@ -19,6 +21,8 @@ interface EditGame {
     price: string;
     discount: number;
     is_free: boolean;
+    is_hero: boolean;
+    hero_order: number;
     release_date: string | null;
     developer: string | null;
     publisher: string | null;
@@ -62,6 +66,8 @@ function GameForm({ editGame, editScreenshots }: { editGame: EditGame | null; ed
         price: editGame?.price ?? '0',
         discount: editGame?.discount ?? 0,
         is_free: editGame?.is_free ?? false,
+        is_hero: editGame?.is_hero ?? false,
+        hero_order: editGame?.hero_order ?? 0,
         release_date: editGame?.release_date ?? '',
         developer: editGame?.developer ?? '',
         publisher: editGame?.publisher ?? '',
@@ -275,6 +281,27 @@ function GameForm({ editGame, editScreenshots }: { editGame: EditGame | null; ed
                                 Free to Play
                             </label>
                         </div>
+                        <div className="flex items-center gap-2 pt-6">
+                            <input type="checkbox" id="is_hero" checked={data.is_hero} onChange={(e) => setData('is_hero', e.target.checked)} />
+                            <label htmlFor="is_hero" className="text-sm">
+                                Feature in Hero Banner
+                            </label>
+                        </div>
+                        {data.is_hero && (
+                            <div>
+                                <label className="mb-1 block text-xs" style={labelStyle}>
+                                    Hero Order (lower shows first)
+                                </label>
+                                <input
+                                    type="number"
+                                    min={0}
+                                    value={data.hero_order}
+                                    onChange={(e) => setData('hero_order', Number(e.target.value))}
+                                    style={inputStyle}
+                                    className="w-full px-3 py-2 text-sm outline-none"
+                                />
+                            </div>
+                        )}
                     </div>
 
                     <div className="mt-4">
@@ -373,6 +400,7 @@ export default function AdminGames({ games, editGame, editScreenshots, saved }: 
                             <th className="px-4 py-3">Price</th>
                             <th className="px-4 py-3">Discount</th>
                             <th className="px-4 py-3">Free</th>
+                            <th className="px-4 py-3">Hero</th>
                             <th className="px-4 py-3">Actions</th>
                         </tr>
                     </thead>
@@ -396,6 +424,13 @@ export default function AdminGames({ games, editGame, editScreenshots, saved }: 
                                 <td className="px-4 py-3">
                                     {game.is_free ? (
                                         <span className="uap-tag uap-tag-danger">Free</span>
+                                    ) : (
+                                        <span style={{ color: 'var(--uap-text-dim)' }}>—</span>
+                                    )}
+                                </td>
+                                <td className="px-4 py-3">
+                                    {game.is_hero ? (
+                                        <span className="uap-tag uap-tag-accent">#{game.hero_order}</span>
                                     ) : (
                                         <span style={{ color: 'var(--uap-text-dim)' }}>—</span>
                                     )}

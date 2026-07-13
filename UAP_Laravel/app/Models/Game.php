@@ -18,6 +18,8 @@ class Game extends Model
         'price',
         'discount',
         'image',
+        'is_hero',
+        'hero_order',
         'is_free',
         'release_date',
         'developer',
@@ -33,6 +35,7 @@ class Game extends Model
     {
         return [
             'price' => 'decimal:2',
+            'is_hero' => 'boolean',
             'is_free' => 'boolean',
             'release_date' => 'date',
         ];

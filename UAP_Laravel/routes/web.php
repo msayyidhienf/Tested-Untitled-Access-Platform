@@ -7,11 +7,13 @@ use App\Http\Controllers\Admin\GameController as AdminGameController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\TicketController as AdminTicketController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Admin\WalletController as AdminWalletController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\FriendController;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\GuideController;
 use App\Http\Controllers\LibraryController;
+use App\Http\Controllers\MidtransNotificationController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
@@ -23,6 +25,8 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::redirect('/', '/store')->name('home');
+
+Route::post('/midtrans/notification', [MidtransNotificationController::class, 'handle'])->name('midtrans.notification');
 
 Route::get('/store', [GameController::class, 'index'])->name('store.index');
 Route::get('/game/{game}', [GameController::class, 'show'])->name('store.show');
@@ -92,6 +96,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders.index');
     Route::post('/orders/{order}/refund', [AdminOrderController::class, 'refund'])->name('orders.refund');
+
+    Route::get('/wallets', [AdminWalletController::class, 'index'])->name('wallets.index');
+    Route::post('/wallets/adjust', [AdminWalletController::class, 'adjust'])->name('wallets.adjust');
 
     Route::get('/achievements', [AdminAchievementController::class, 'index'])->name('achievements.index');
     Route::post('/achievements', [AdminAchievementController::class, 'store'])->name('achievements.store');

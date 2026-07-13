@@ -5,6 +5,7 @@ const NAV_ITEMS = [
     { label: 'Dashboard', href: '/admin' },
     { label: 'Games', href: '/admin/games' },
     { label: 'Orders', href: '/admin/orders' },
+    { label: 'Wallets', href: '/admin/wallets' },
     { label: 'Users', href: '/admin/users' },
     { label: 'Achievements', href: '/admin/achievements' },
     { label: 'Support Articles', href: '/admin/articles' },

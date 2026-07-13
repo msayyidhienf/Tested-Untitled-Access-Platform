@@ -2,33 +2,40 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Notification;
+use App\Models\TopupOrder;
 use App\Models\WalletTransaction;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Midtrans\Config as MidtransConfig;
+use Midtrans\Snap;
 
 class WalletController extends Controller
 {
     public const PRESETS = [12000, 60000, 120000, 300000, 600000, 1200000];
 
-    public function index()
+    public const TYPES = ['topup', 'purchase', 'refund', 'adjustment'];
+
+    public function index(Request $request)
     {
         $user = Auth::user();
+        $type = $request->query('type', '');
 
         return Inertia::render('wallet/index', [
             'balance' => $user->ucash_balance,
             'presets' => self::PRESETS,
+            'type' => $type,
             'transactions' => WalletTransaction::where('user_id', $user->id)
+                ->when(in_array($type, self::TYPES, true), fn ($q) => $q->where('type', $type))
                 ->orderByDesc('created_at')
-                ->limit(50)
-                ->get(),
+                ->paginate(15)
+                ->withQueryString(),
         ]);
     }
 
-    public function topUp(Request $request): RedirectResponse
+    public function topUp(Request $request): JsonResponse
     {
         $data = $request->validate([
             'amount' => ['required', 'numeric', 'min:1000', 'max:10000000'],
@@ -36,27 +43,39 @@ class WalletController extends Controller
 
         $user = Auth::user();
 
-        DB::transaction(function () use ($user, $data) {
-            $user->ucash_balance = $user->ucash_balance + $data['amount'];
-            $user->save();
+        MidtransConfig::$serverKey = config('midtrans.server_key');
+        MidtransConfig::$isProduction = (bool) config('midtrans.is_production');
+        MidtransConfig::$isSanitized = config('midtrans.is_sanitized');
+        MidtransConfig::$is3ds = config('midtrans.is_3ds');
 
-            WalletTransaction::create([
-                'user_id' => $user->id,
-                'type' => 'topup',
-                'amount' => $data['amount'],
-                'balance_after' => $user->ucash_balance,
-                'description' => 'Top Up Ucash',
-            ]);
+        $orderId = 'UCTOPUP-'.$user->id.'-'.now()->format('YmdHis').'-'.strtoupper(Str::random(4));
 
-            Notification::create([
-                'user_id' => $user->id,
-                'type' => 'topup',
-                'title' => 'Top Up Successful',
-                'message' => 'You topped up Rp '.number_format($data['amount'], 0, ',', '.').' Ucash.',
-                'link' => '/wallet',
-            ]);
-        });
+        $topupOrder = TopupOrder::create([
+            'user_id' => $user->id,
+            'midtrans_order_id' => $orderId,
+            'amount' => $data['amount'],
+            'status' => 'pending',
+        ]);
 
-        return redirect()->route('wallet.index')->with('status', 'Top up successful!');
+        $snapToken = Snap::getSnapToken([
+            'transaction_details' => [
+                'order_id' => $orderId,
+                'gross_amount' => (int) $data['amount'],
+            ],
+            'customer_details' => [
+                'first_name' => $user->username,
+                'email' => $user->email,
+            ],
+            'item_details' => [[
+                'id' => 'ucash-topup',
+                'price' => (int) $data['amount'],
+                'quantity' => 1,
+                'name' => 'Ucash Top Up',
+            ]],
+        ]);
+
+        $topupOrder->update(['snap_token' => $snapToken]);
+
+        return response()->json(['snap_token' => $snapToken]);
     }
 }

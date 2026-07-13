@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Library;
 use App\Models\Notification;
 use App\Models\Order;
 use App\Models\WalletTransaction;
@@ -50,11 +51,17 @@ class OrderController extends Controller
                     'order_id' => $order->id,
                 ]);
 
+                $gameIds = $order->items()->pluck('game_id');
+
+                Library::where('user_id', $user->id)
+                    ->whereIn('game_id', $gameIds)
+                    ->delete();
+
                 Notification::create([
                     'user_id' => $user->id,
                     'type' => 'refund',
                     'title' => 'Order Refunded',
-                    'message' => 'Your order #'.$order->id.' was refunded to your Ucash balance.',
+                    'message' => 'Your order #'.$order->id.' was refunded to your Ucash balance and removed from your library.',
                     'link' => '/wallet',
                 ]);
 

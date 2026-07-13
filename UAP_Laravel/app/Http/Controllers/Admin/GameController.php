@@ -94,6 +94,8 @@ class GameController extends Controller
             'price' => 'required|numeric|min:0',
             'discount' => 'nullable|integer|min:0|max:100',
             'is_free' => 'nullable|boolean',
+            'is_hero' => 'nullable|boolean',
+            'hero_order' => 'nullable|integer|min:0',
             'release_date' => 'nullable|date',
             'developer' => 'nullable|string|max:100',
             'publisher' => 'nullable|string|max:100',
@@ -102,7 +104,7 @@ class GameController extends Controller
             'req_memory' => 'nullable|string|max:50',
             'req_graphics' => 'nullable|string|max:200',
             'req_storage' => 'nullable|string|max:50',
-        ]) + ['is_free' => $request->boolean('is_free')];
+        ]) + ['is_free' => $request->boolean('is_free'), 'is_hero' => $request->boolean('is_hero')];
     }
 
     private function storeImage(Request $request, int $gameId, ?string $oldImage = null): ?string

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class WalletTransaction extends Model
 {
@@ -12,13 +13,24 @@ class WalletTransaction extends Model
     public $timestamps = false;
 
     protected $fillable = [
+        'reference_no',
         'user_id',
         'type',
         'amount',
         'balance_after',
         'description',
         'order_id',
+        'topup_order_id',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $transaction) {
+            if (! $transaction->reference_no) {
+                $transaction->reference_no = 'UC-'.now()->format('ymd').'-'.strtoupper(Str::random(6));
+            }
+        });
+    }
 
     protected function casts(): array
     {
@@ -37,5 +49,10 @@ class WalletTransaction extends Model
     public function order()
     {
         return $this->belongsTo(Order::class);
+    }
+
+    public function topupOrder()
+    {
+        return $this->belongsTo(TopupOrder::class);
     }
 }

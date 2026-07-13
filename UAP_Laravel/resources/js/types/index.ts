@@ -40,6 +40,7 @@ export interface SharedData {
     notifications: AppNotification[];
     unreadNotificationCount: number;
     flash: { status?: string | null; error?: string | null };
+    midtrans: { clientKey: string; isProduction: boolean };
     [key: string]: unknown;
 }
 
@@ -64,6 +65,8 @@ export interface Game {
     price: string;
     discount: number;
     image: string | null;
+    is_hero: boolean;
+    hero_order: number;
     is_free: boolean;
     release_date: string | null;
     developer: string | null;

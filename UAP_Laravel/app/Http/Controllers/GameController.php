@@ -47,8 +47,11 @@ class GameController extends Controller
             ]);
         }
 
+        $heroGames = Game::where('is_hero', true)->orderBy('hero_order')->orderByDesc('created_at')->limit(5)->get();
+
         return Inertia::render('store/index', [
             'mode' => 'default',
+            'heroGames' => $heroGames,
             'featuredGames' => Game::where('is_free', false)->orderByDesc('created_at')->limit(8)->get(),
             'newReleases' => Game::orderByDesc('release_date')->limit(8)->get(),
             'onSaleGames' => Game::where('discount', '>', 0)->orderByDesc('discount')->get(),
