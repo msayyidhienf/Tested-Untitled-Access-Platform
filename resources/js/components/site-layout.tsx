@@ -1,3 +1,4 @@
+import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import SiteSidebar from '@/components/site-sidebar';
 import type { ReactNode } from 'react';
@@ -12,6 +13,7 @@ export default function SiteLayout({ section, children }: { section?: Section; c
                 <SiteSidebar section={section} />
                 <main className="min-w-0 flex-1">{children}</main>
             </div>
+            <SiteFooter />
         </div>
     );
 }

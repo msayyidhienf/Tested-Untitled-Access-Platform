@@ -53,14 +53,20 @@ function Hero({ games }: { games: Game[] }) {
 
                     return (
                         <div key={game.id} className={`uap-hero-slide ${i === active ? 'active' : ''}`}>
-                            <div
-                                className="uap-hero-slide-bg"
-                                style={
-                                    game.image
-                                        ? { backgroundImage: `url('/uploads/games/${game.id}/${game.image}')` }
-                                        : { background: GENRE_ACCENTS[game.genre ?? ''] ?? DEFAULT_ACCENT }
-                                }
-                            />
+                            {game.image ? (
+                                <>
+                                    <div
+                                        className="uap-hero-slide-bg uap-hero-slide-bg-blur"
+                                        style={{ backgroundImage: `url('/uploads/games/${game.id}/${game.image}')` }}
+                                    />
+                                    <div
+                                        className="uap-hero-slide-bg uap-hero-slide-bg-fit"
+                                        style={{ backgroundImage: `url('/uploads/games/${game.id}/${game.image}')` }}
+                                    />
+                                </>
+                            ) : (
+                                <div className="uap-hero-slide-bg" style={{ background: GENRE_ACCENTS[game.genre ?? ''] ?? DEFAULT_ACCENT }} />
+                            )}
                             <div className="uap-hero-slide-overlay" />
                             <div className="uap-hero-content">
                                 <h1 className="uap-hero-title">{game.title}</h1>

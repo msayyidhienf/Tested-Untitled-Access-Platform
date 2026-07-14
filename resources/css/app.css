@@ -249,6 +249,18 @@
     background-size: cover;
     background-position: center;
 }
+/* Backdrop layer: fills the box with a blurred copy so no empty gaps show. */
+.uap-hero-slide-bg-blur {
+    filter: blur(28px) brightness(0.45);
+    transform: scale(1.15);
+}
+/* Foreground layer: the full artwork, never cropped, anchored to the right
+   where the overlay gradient is lightest. */
+.uap-hero-slide-bg-fit {
+    background-size: contain;
+    background-position: right center;
+    background-repeat: no-repeat;
+}
 .uap-hero-slide-overlay {
     position: absolute;
     inset: 0;
@@ -344,6 +356,76 @@
     background: var(--uap-accent);
     width: 44px;
     box-shadow: 0 0 10px rgba(184, 50, 50, 0.5);
+}
+
+/* ============================================================
+   FOOTER — site-wide bottom section
+   ============================================================ */
+.uap-footer {
+    background: var(--uap-bg-deep);
+    border-top: 1px solid var(--uap-border);
+    margin-top: 48px;
+    font-family: 'Monda', sans-serif;
+}
+.uap-footer-main {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 48px;
+    justify-content: space-between;
+    padding: 40px 48px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+.uap-footer-brand {
+    max-width: 300px;
+}
+.uap-footer-logo {
+    height: 36px;
+    margin-bottom: 14px;
+}
+.uap-footer-tagline {
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--uap-text-secondary);
+}
+.uap-footer-columns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 56px;
+}
+.uap-footer-col {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    min-width: 120px;
+}
+.uap-footer-col-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--uap-text-primary);
+    margin-bottom: 4px;
+}
+.uap-footer-link {
+    font-size: 12px;
+    color: var(--uap-text-secondary);
+    transition: color 0.15s ease;
+}
+.uap-footer-link:hover {
+    color: var(--uap-accent-hover);
+}
+.uap-footer-bottom {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+    justify-content: space-between;
+    padding: 16px 48px;
+    border-top: 1px solid var(--uap-border);
+    max-width: 1400px;
+    margin: 0 auto;
+    font-size: 11px;
+    color: var(--uap-text-dim);
 }
 
 /* ============================================================
