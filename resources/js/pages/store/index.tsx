@@ -59,10 +59,12 @@ function Hero({ games }: { games: Game[] }) {
                                         className="uap-hero-slide-bg uap-hero-slide-bg-blur"
                                         style={{ backgroundImage: `url('/uploads/games/${game.id}/${game.image}')` }}
                                     />
-                                    <div
-                                        className="uap-hero-slide-bg uap-hero-slide-bg-fit"
-                                        style={{ backgroundImage: `url('/uploads/games/${game.id}/${game.image}')` }}
-                                    />
+                                    <div className="uap-hero-slide-art">
+                                        <div
+                                            className="uap-hero-slide-bg uap-hero-slide-bg-fit"
+                                            style={{ backgroundImage: `url('/uploads/games/${game.id}/${game.image}')` }}
+                                        />
+                                    </div>
                                 </>
                             ) : (
                                 <div className="uap-hero-slide-bg" style={{ background: GENRE_ACCENTS[game.genre ?? ''] ?? DEFAULT_ACCENT }} />

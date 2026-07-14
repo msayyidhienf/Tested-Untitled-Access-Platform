@@ -254,12 +254,15 @@
     filter: blur(28px) brightness(0.45);
     transform: scale(1.15);
 }
-/* Foreground layer: the full artwork, never cropped, anchored to the right
-   where the overlay gradient is lightest. */
+/* Artwork fills a fixed 50/50 lane on the right — always full-bleed, no gaps. */
+.uap-hero-slide-art {
+    position: absolute;
+    inset: 0;
+    left: 50%;
+}
 .uap-hero-slide-bg-fit {
-    background-size: contain;
-    background-position: right center;
-    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
 }
 .uap-hero-slide-overlay {
     position: absolute;
