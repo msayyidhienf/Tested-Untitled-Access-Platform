@@ -1,7 +1,9 @@
+import UserAvatar from '@/components/user-avatar';
 import { Link } from '@inertiajs/react';
 import type { CSSProperties } from 'react';
 
 interface TopPlayer {
+    id: number;
     username: string;
     avatar: string | null;
     total_hours: number;
@@ -88,16 +90,11 @@ export default function CommunitySidebar({ sidebar }: { sidebar: SidebarData }) 
                     </div>
                     <div className="flex flex-col gap-2">
                         {sidebar.topPlayers.map((p, i) => (
-                            <div key={p.username} className="flex items-center gap-2">
+                            <div key={p.id} className="flex items-center gap-2">
                                 <span className="w-4 text-xs" style={{ color: 'var(--uap-text-dim)' }}>
                                     {i + 1}
                                 </span>
-                                <div
-                                    className="flex h-6 w-6 items-center justify-center text-[10px] font-bold"
-                                    style={{ background: 'var(--uap-bg-hover)', color: 'var(--uap-text-primary)' }}
-                                >
-                                    {p.username.slice(0, 2).toUpperCase()}
-                                </div>
+                                <UserAvatar user={p} size={24} />
                                 <span className="flex-1 truncate text-sm">{p.username}</span>
                                 <span className="text-xs" style={{ color: 'var(--uap-text-dim)' }}>
                                     {p.total_hours} hrs

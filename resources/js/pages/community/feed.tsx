@@ -1,5 +1,6 @@
 import CommunitySidebar, { CommunityTabs } from '@/components/community-sidebar';
 import SiteLayout from '@/components/site-layout';
+import UserAvatar from '@/components/user-avatar';
 import { type SharedData } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
@@ -35,14 +36,6 @@ const inputStyle = {
     color: 'var(--uap-text-primary)',
 };
 
-function Avatar({ username }: { username: string }) {
-    return (
-        <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center text-xs font-bold" style={{ background: 'var(--uap-bg-hover)' }}>
-            {username.slice(0, 2).toUpperCase()}
-        </div>
-    );
-}
-
 function PostCard({ post, canReply }: { post: PostItem; canReply: boolean }) {
     const [expanded, setExpanded] = useState(false);
     const [replyContent, setReplyContent] = useState('');
@@ -67,7 +60,7 @@ function PostCard({ post, canReply }: { post: PostItem; canReply: boolean }) {
     return (
         <div className="uap-card p-4">
             <div className="mb-2 flex items-center gap-2">
-                <Avatar username={post.user.username} />
+                <UserAvatar user={post.user} />
                 <Link href={`/profile/${post.user.id}`} className="text-sm font-semibold hover:underline">
                     {post.user.username}
                 </Link>
@@ -95,7 +88,7 @@ function PostCard({ post, canReply }: { post: PostItem; canReply: boolean }) {
                     )}
                     {post.replies.map((reply) => (
                         <div key={reply.id} className="flex gap-2">
-                            <Avatar username={reply.user.username} />
+                            <UserAvatar user={reply.user} />
                             <div>
                                 <Link href={`/profile/${reply.user.id}`} className="text-xs font-semibold hover:underline">
                                     {reply.user.username}

@@ -1,5 +1,6 @@
 import CommunitySidebar, { CommunityTabs } from '@/components/community-sidebar';
 import SiteLayout from '@/components/site-layout';
+import UserAvatar from '@/components/user-avatar';
 import { type SharedData } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
@@ -123,12 +124,7 @@ export default function CommunityReviews({ reviews, userGames, sidebar }: Review
                                 <div key={review.id} className="uap-card p-4">
                                     <div className="mb-2 flex items-center justify-between">
                                         <div className="flex items-center gap-2">
-                                            <div
-                                                className="flex h-7 w-7 items-center justify-center text-xs font-bold"
-                                                style={{ background: 'var(--uap-bg-hover)' }}
-                                            >
-                                                {review.user.username.slice(0, 2).toUpperCase()}
-                                            </div>
+                                            <UserAvatar user={review.user} />
                                             <Link href={`/profile/${review.user.id}`} className="text-sm font-semibold hover:underline">
                                                 {review.user.username}
                                             </Link>

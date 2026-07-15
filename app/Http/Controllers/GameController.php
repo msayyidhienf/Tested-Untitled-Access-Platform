@@ -66,7 +66,7 @@ class GameController extends Controller
         return Inertia::render('store/show', [
             'game' => $game,
             'images' => $game->images,
-            'reviews' => $game->reviews()->with('user:id,username')->latest('created_at')->get(),
+            'reviews' => $game->reviews()->with('user:id,username,avatar')->latest('created_at')->get(),
             'inCart' => $userId ? Cart::where('user_id', $userId)->where('game_id', $game->id)->exists() : false,
             'inLibrary' => $userId ? Library::where('user_id', $userId)->where('game_id', $game->id)->exists() : false,
         ]);

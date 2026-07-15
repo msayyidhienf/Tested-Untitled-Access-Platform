@@ -66,7 +66,7 @@ class PostController extends Controller
     {
         $topPlayers = User::query()
             ->leftJoin('library', 'library.user_id', '=', 'users.id')
-            ->select('users.username', 'users.avatar')
+            ->select('users.id', 'users.username', 'users.avatar')
             ->selectRaw('COALESCE(SUM(library.hours_played), 0) as total_hours')
             ->groupBy('users.id', 'users.username', 'users.avatar')
             ->orderByDesc('total_hours')

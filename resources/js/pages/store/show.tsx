@@ -1,4 +1,5 @@
 import SiteLayout from '@/components/site-layout';
+import UserAvatar from '@/components/user-avatar';
 import { type Game, type SharedData } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
@@ -12,7 +13,7 @@ interface Review {
     id: number;
     rating: number;
     content: string;
-    user: { username: string };
+    user: { id: number; username: string; avatar: string | null };
 }
 
 interface GameShowProps {
@@ -280,7 +281,10 @@ export default function GameShow({ game, images, reviews, inCart, inLibrary }: G
                             {reviews.map((review) => (
                                 <div key={review.id} className="pb-4" style={{ borderBottom: '1px solid var(--uap-border)' }}>
                                     <div className="mb-1 flex items-center justify-between">
-                                        <span className="font-semibold">{review.user.username}</span>
+                                        <div className="flex items-center gap-2">
+                                            <UserAvatar user={review.user} size={24} />
+                                            <span className="font-semibold">{review.user.username}</span>
+                                        </div>
                                         <span className="uap-tag">{review.rating}/5</span>
                                     </div>
                                     <p className="text-sm" style={{ color: 'var(--uap-text-secondary)' }}>
