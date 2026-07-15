@@ -16,7 +16,15 @@ class Post extends Model
         'title',
         'content',
         'category',
+        'edited_at',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'edited_at' => 'datetime',
+        ];
+    }
 
     public function user()
     {

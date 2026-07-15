@@ -47,6 +47,24 @@ class PostController extends Controller
         return back();
     }
 
+    public function update(Request $request, Post $post): RedirectResponse
+    {
+        abort_unless($post->user_id === Auth::id(), 403);
+
+        $data = $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+            'category' => 'required|in:General,Announcement,Game Discussion,Tech Support,Trading',
+        ]);
+
+        $post->update([
+            ...$data,
+            'edited_at' => now(),
+        ]);
+
+        return back();
+    }
+
     public function storeReply(Request $request, Post $post): RedirectResponse
     {
         $data = $request->validate([

@@ -6,6 +6,7 @@ const NAV_ITEMS = [
     { label: 'Games', href: '/admin/games' },
     { label: 'Orders', href: '/admin/orders' },
     { label: 'Wallets', href: '/admin/wallets' },
+    { label: 'Posts', href: '/admin/posts' },
     { label: 'Users', href: '/admin/users' },
     { label: 'Achievements', href: '/admin/achievements' },
     { label: 'Support Articles', href: '/admin/articles' },

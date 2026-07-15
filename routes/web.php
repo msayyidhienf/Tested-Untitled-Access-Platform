@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\ArticleController as AdminArticleController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\GameController as AdminGameController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\Admin\PostController as AdminPostController;
 use App\Http\Controllers\Admin\TicketController as AdminTicketController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\WalletController as AdminWalletController;
@@ -61,6 +62,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/library/favorite/{game}', [LibraryController::class, 'toggleFavorite'])->name('library.toggleFavorite');
 
     Route::post('/community/posts', [PostController::class, 'store'])->name('posts.store');
+    Route::post('/community/posts/{post}/update', [PostController::class, 'update'])->name('posts.update');
     Route::post('/community/posts/{post}/replies', [PostController::class, 'storeReply'])->name('posts.replies.store');
     Route::post('/community/reviews', [ReviewController::class, 'store'])->name('reviews.store');
 
@@ -89,6 +91,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
     Route::post('/users/{user}/role', [AdminUserController::class, 'updateRole'])->name('users.updateRole');
     Route::post('/users/{user}/delete', [AdminUserController::class, 'destroy'])->name('users.destroy');
+
+    Route::get('/posts', [AdminPostController::class, 'index'])->name('posts.index');
+    Route::post('/posts/{post}/delete', [AdminPostController::class, 'destroy'])->name('posts.destroy');
 
     Route::get('/tickets', [AdminTicketController::class, 'index'])->name('tickets.index');
     Route::post('/tickets/{ticket}/status', [AdminTicketController::class, 'updateStatus'])->name('tickets.updateStatus');

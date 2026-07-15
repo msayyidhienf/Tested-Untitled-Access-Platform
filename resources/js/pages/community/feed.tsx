@@ -18,6 +18,7 @@ interface PostItem {
     content: string;
     category: string;
     created_at: string;
+    edited_at: string | null;
     user: { id: number; username: string; avatar: string | null };
     replies: ReplyItem[];
 }
@@ -36,10 +37,17 @@ const inputStyle = {
     color: 'var(--uap-text-primary)',
 };
 
-function PostCard({ post, canReply }: { post: PostItem; canReply: boolean }) {
+function PostCard({ post, canReply, currentUserId }: { post: PostItem; canReply: boolean; currentUserId: number | undefined }) {
     const [expanded, setExpanded] = useState(false);
+    const [editing, setEditing] = useState(false);
+    const [editTitle, setEditTitle] = useState(post.title);
+    const [editContent, setEditContent] = useState(post.content);
+    const [editCategory, setEditCategory] = useState(post.category);
+    const [savingEdit, setSavingEdit] = useState(false);
     const [replyContent, setReplyContent] = useState('');
     const [submitting, setSubmitting] = useState(false);
+
+    const isOwner = currentUserId === post.user.id;
 
     const submitReply: FormEventHandler = (e) => {
         e.preventDefault();
@@ -57,19 +65,96 @@ function PostCard({ post, canReply }: { post: PostItem; canReply: boolean }) {
         );
     };
 
+    const submitEdit: FormEventHandler = (e) => {
+        e.preventDefault();
+        setSavingEdit(true);
+        router.post(
+            `/community/posts/${post.id}/update`,
+            { title: editTitle, content: editContent, category: editCategory },
+            {
+                preserveScroll: true,
+                onSuccess: () => setEditing(false),
+                onFinish: () => setSavingEdit(false),
+            },
+        );
+    };
+
     return (
         <div className="uap-card p-4">
-            <div className="mb-2 flex items-center gap-2">
-                <UserAvatar user={post.user} />
-                <Link href={`/profile/${post.user.id}`} className="text-sm font-semibold hover:underline">
-                    {post.user.username}
-                </Link>
-                <span className="uap-tag">{post.category}</span>
+            <div className="mb-2 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <UserAvatar user={post.user} />
+                    <Link href={`/profile/${post.user.id}`} className="text-sm font-semibold hover:underline">
+                        {post.user.username}
+                    </Link>
+                    <span className="uap-tag">{post.category}</span>
+                    {post.edited_at && (
+                        <span className="text-xs" style={{ color: 'var(--uap-text-dim)' }}>
+                            (edited)
+                        </span>
+                    )}
+                </div>
+                {isOwner && !editing && (
+                    <button onClick={() => setEditing(true)} className="text-xs hover:underline" style={{ color: 'var(--uap-text-dim)' }}>
+                        Edit
+                    </button>
+                )}
             </div>
-            <h3 className="mb-1 font-semibold">{post.title}</h3>
-            <p className="text-sm" style={{ color: 'var(--uap-text-secondary)' }}>
-                {post.content}
-            </p>
+
+            {editing ? (
+                <form onSubmit={submitEdit} className="mb-2 flex flex-col gap-2">
+                    <input
+                        type="text"
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        required
+                        style={inputStyle}
+                        className="w-full px-3 py-2 text-sm outline-none"
+                    />
+                    <textarea
+                        value={editContent}
+                        onChange={(e) => setEditContent(e.target.value)}
+                        required
+                        rows={3}
+                        style={inputStyle}
+                        className="w-full px-3 py-2 text-sm outline-none"
+                    />
+                    <div className="flex items-center justify-between">
+                        <select
+                            value={editCategory}
+                            onChange={(e) => setEditCategory(e.target.value)}
+                            style={inputStyle}
+                            className="px-2 py-1.5 text-sm"
+                        >
+                            {CATEGORIES.map((c) => (
+                                <option key={c} value={c}>
+                                    {c}
+                                </option>
+                            ))}
+                        </select>
+                        <div className="flex gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setEditing(false)}
+                                className="uap-btn uap-btn-outline uap-btn-sm"
+                                disabled={savingEdit}
+                            >
+                                Cancel
+                            </button>
+                            <button type="submit" className="uap-btn uap-btn-primary uap-btn-sm" disabled={savingEdit}>
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            ) : (
+                <>
+                    <h3 className="mb-1 font-semibold">{post.title}</h3>
+                    <p className="text-sm" style={{ color: 'var(--uap-text-secondary)' }}>
+                        {post.content}
+                    </p>
+                </>
+            )}
 
             <button
                 onClick={() => setExpanded((v) => !v)}
@@ -219,7 +304,7 @@ export default function CommunityFeed({ posts, category, sidebar }: FeedProps) {
                                 </div>
                             )}
                             {posts.map((post) => (
-                                <PostCard key={post.id} post={post} canReply={!!auth.user} />
+                                <PostCard key={post.id} post={post} canReply={!!auth.user} currentUserId={auth.user?.id} />
                             ))}
                         </div>
                     </div>
