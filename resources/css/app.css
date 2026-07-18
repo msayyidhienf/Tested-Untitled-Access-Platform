@@ -75,6 +75,23 @@ html {
        scrollbar and, without this, snaps the whole layout a few pixels sideways). */
     scrollbar-gutter: stable;
 }
+/* Radix (dropdown-menu/dialog) locks body scroll on open by injecting a fresh
+   <style> tag into <head> with `body[data-scroll-locked] { margin-right: Npx }`
+   compensation for the "missing" scrollbar. Since `html` above already
+   permanently reserves that space via scrollbar-gutter, Radix's compensation
+   is redundant and double-counts, shoving the whole page left every time any
+   popup opens. Radix's rule has the exact same specificity as a plain
+   `body[data-scroll-locked]` selector, and because its <style> tag is always
+   inserted *after* this stylesheet, it would win on source order alone even
+   with `!important` — so this selector is deliberately padded with `html` to
+   out-rank it regardless of injection order. */
+html body[data-scroll-locked] {
+    margin-right: 0 !important;
+    padding-right: 0 !important;
+    padding-left: 0 !important;
+    padding-top: 0 !important;
+    overflow: visible !important;
+}
 ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
