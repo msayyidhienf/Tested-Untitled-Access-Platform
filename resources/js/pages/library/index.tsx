@@ -1,15 +1,24 @@
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import SiteLayout from '@/components/site-layout';
-import { type Game } from '@/types';
-import { Head, Link, router } from '@inertiajs/react';
+import { type Game, type SharedData } from '@/types';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Check, FolderPlus, X } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
 interface LibraryEntry {
     id: number;
     game_id: number;
     hours_played: number;
+    last_played_at: string | null;
     is_installed: boolean;
     is_favorite: boolean;
     game: Game;
+}
+
+interface CollectionRow {
+    id: number;
+    name: string;
+    library_entries_count: number;
 }
 
 interface LibraryStats {
@@ -21,8 +30,11 @@ interface LibraryStats {
 
 interface LibraryIndexProps {
     tab: string;
+    collectionId: number | null;
     search: string;
     entries: LibraryEntry[];
+    entryCollectionIds: Record<number, number[]>;
+    collections: CollectionRow[];
     recentlyPlayed: LibraryEntry[];
     stats: LibraryStats;
 }
@@ -34,20 +46,70 @@ const TABS = [
     { key: 'favorites', label: 'Favorites' },
 ];
 
-export default function LibraryIndex({ tab, search, entries, recentlyPlayed, stats }: LibraryIndexProps) {
-    const [query, setQuery] = useState(search);
+function timeAgo(value: string) {
+    const seconds = Math.floor((Date.now() - new Date(value).getTime()) / 1000);
+    if (seconds < 60) return 'just now';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+}
 
-    const goToTab = (key: string) => {
-        router.get('/library', { tab: key, q: query || undefined });
+export default function LibraryIndex({
+    tab,
+    collectionId,
+    search,
+    entries,
+    entryCollectionIds,
+    collections,
+    recentlyPlayed,
+    stats,
+}: LibraryIndexProps) {
+    const { flash } = usePage<SharedData>().props;
+    const [query, setQuery] = useState(search);
+    const [newCollectionName, setNewCollectionName] = useState('');
+
+    const goToTab = (key: string, cId?: number) => {
+        router.get('/library', { tab: key, collection: cId, q: query || undefined });
     };
 
     const submitSearch: FormEventHandler = (e) => {
         e.preventDefault();
-        router.get('/library', { tab, q: query || undefined });
+        router.get('/library', { tab, collection: collectionId ?? undefined, q: query || undefined });
     };
 
     const toggleFavorite = (gameId: number) => {
-        router.post(`/library/favorite/${gameId}`, { tab, q: query || undefined });
+        router.post(`/library/favorite/${gameId}`, { tab, collection: collectionId ?? undefined, q: query || undefined }, { preserveScroll: true });
+    };
+
+    const toggleInstalled = (gameId: number) => {
+        router.post(`/library/install/${gameId}`, { tab, collection: collectionId ?? undefined, q: query || undefined }, { preserveScroll: true });
+    };
+
+    const playGame = (gameId: number) => {
+        router.post(`/library/play/${gameId}`, { tab, collection: collectionId ?? undefined, q: query || undefined }, { preserveScroll: true });
+    };
+
+    const toggleGameInCollection = (collectionIdToToggle: number, gameId: number) => {
+        router.post(
+            `/collections/${collectionIdToToggle}/games/${gameId}`,
+            { tab, collection: collectionId ?? undefined, q: query || undefined },
+            { preserveScroll: true },
+        );
+    };
+
+    const submitNewCollection: FormEventHandler = (e) => {
+        e.preventDefault();
+        if (!newCollectionName.trim()) return;
+        router.post('/collections', { name: newCollectionName }, { onSuccess: () => setNewCollectionName('') });
+    };
+
+    const deleteCollection = (collection: CollectionRow) => {
+        if (confirm(`Delete collection "${collection.name}"? Games inside it stay in your library.`)) {
+            router.post(`/collections/${collection.id}/delete`, {}, { onSuccess: () => (tab === 'collection' && collectionId === collection.id ? goToTab('all') : undefined) });
+        }
     };
 
     return (
@@ -81,8 +143,14 @@ export default function LibraryIndex({ tab, search, entries, recentlyPlayed, sta
                     </div>
                 </div>
 
+                {flash?.status && (
+                    <div className="mb-4 p-3 text-sm" style={{ background: 'rgba(46, 160, 67, 0.1)', border: '1px solid var(--uap-accent-green)' }}>
+                        {flash.status}
+                    </div>
+                )}
+
                 {/* Tabs */}
-                <div className="mb-4 flex gap-2" style={{ borderBottom: '1px solid var(--uap-border)' }}>
+                <div className="mb-3 flex flex-wrap items-center gap-2" style={{ borderBottom: '1px solid var(--uap-border)' }}>
                     {TABS.map((t) => (
                         <button
                             key={t.key}
@@ -97,7 +165,59 @@ export default function LibraryIndex({ tab, search, entries, recentlyPlayed, sta
                             {t.label}
                         </button>
                     ))}
+
+                    <span style={{ color: 'var(--uap-border)' }}>|</span>
+
+                    {collections.map((c) => (
+                        <div
+                            key={c.id}
+                            className="group flex items-center gap-1 px-3 py-2"
+                            style={{
+                                borderBottom: tab === 'collection' && collectionId === c.id ? '2px solid var(--uap-accent)' : '2px solid transparent',
+                            }}
+                        >
+                            <button
+                                onClick={() => goToTab('collection', c.id)}
+                                style={{
+                                    fontFamily: "'Monda', sans-serif",
+                                    color: tab === 'collection' && collectionId === c.id ? 'var(--uap-accent)' : 'var(--uap-text-secondary)',
+                                }}
+                                className="text-sm font-semibold"
+                            >
+                                {c.name} <span style={{ color: 'var(--uap-text-dim)' }}>({c.library_entries_count})</span>
+                            </button>
+                            <button
+                                onClick={() => deleteCollection(c)}
+                                className="opacity-0 group-hover:opacity-100"
+                                style={{ color: 'var(--uap-text-dim)' }}
+                                title="Delete collection"
+                            >
+                                <X size={12} />
+                            </button>
+                        </div>
+                    ))}
                 </div>
+
+                {/* New collection */}
+                <form onSubmit={submitNewCollection} className="mb-6 flex items-center gap-2">
+                    <FolderPlus size={15} style={{ color: 'var(--uap-text-dim)' }} />
+                    <input
+                        type="text"
+                        value={newCollectionName}
+                        onChange={(e) => setNewCollectionName(e.target.value)}
+                        placeholder="New collection name (e.g. Backlog, Currently Playing)"
+                        maxLength={60}
+                        style={{
+                            background: 'var(--uap-bg-card)',
+                            border: '1px solid var(--uap-border)',
+                            color: 'var(--uap-text-primary)',
+                        }}
+                        className="w-72 px-3 py-1.5 text-xs outline-none"
+                    />
+                    <button type="submit" disabled={!newCollectionName.trim()} className="uap-btn uap-btn-outline uap-btn-sm">
+                        Create
+                    </button>
+                </form>
 
                 {/* Search */}
                 <form onSubmit={submitSearch} className="mb-6">
@@ -131,7 +251,7 @@ export default function LibraryIndex({ tab, search, entries, recentlyPlayed, sta
                                     <div className="overflow-hidden">
                                         <p className="truncate text-sm font-medium">{entry.game.title}</p>
                                         <p className="text-xs" style={{ color: 'var(--uap-text-dim)' }}>
-                                            {entry.hours_played} hrs played
+                                            {entry.last_played_at ? `Played ${timeAgo(entry.last_played_at)}` : 'Not played yet'}
                                         </p>
                                     </div>
                                 </Link>
@@ -144,7 +264,15 @@ export default function LibraryIndex({ tab, search, entries, recentlyPlayed, sta
                 <section>
                     <div className="mb-3 flex items-center justify-between">
                         <h2 className="uap-section-title" style={{ marginBottom: 0 }}>
-                            {tab === 'favorites' ? 'Favorites' : tab === 'installed' ? 'Installed' : tab === 'not-installed' ? 'Not Installed' : 'All Games'}
+                            {tab === 'favorites'
+                                ? 'Favorites'
+                                : tab === 'installed'
+                                  ? 'Installed'
+                                  : tab === 'not-installed'
+                                    ? 'Not Installed'
+                                    : tab === 'collection'
+                                      ? (collections.find((c) => c.id === collectionId)?.name ?? 'Collection')
+                                      : 'All Games'}
                         </h2>
                         <span className="text-xs" style={{ color: 'var(--uap-text-dim)' }}>
                             {entries.length} title{entries.length !== 1 ? 's' : ''}
@@ -157,6 +285,8 @@ export default function LibraryIndex({ tab, search, entries, recentlyPlayed, sta
                                 `No results for "${search}".`
                             ) : tab === 'favorites' ? (
                                 'No favorites yet. Click the star on any game.'
+                            ) : tab === 'collection' ? (
+                                'No games in this collection yet. Use the folder icon on a game to add it.'
                             ) : (
                                 <>
                                     Library is empty.{' '}
@@ -169,36 +299,98 @@ export default function LibraryIndex({ tab, search, entries, recentlyPlayed, sta
                         </div>
                     ) : (
                         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-                            {entries.map((entry) => (
-                                <div key={entry.id} className="uap-card group relative">
-                                    <Link href={`/game/${entry.game_id}`} className="block aspect-video" style={{ background: 'var(--uap-bg-deep)' }}>
-                                        {entry.game.image && (
-                                            <img
-                                                src={`/uploads/games/${entry.game_id}/${entry.game.image}`}
-                                                alt={entry.game.title}
-                                                className="h-full w-full object-cover"
-                                            />
-                                        )}
-                                    </Link>
-                                    <div className="p-2">
-                                        <Link href={`/game/${entry.game_id}`} className="uap-game-card-title block hover:underline">
-                                            {entry.game.title}
+                            {entries.map((entry) => {
+                                const inCollectionIds = entryCollectionIds[entry.game_id] ?? [];
+
+                                return (
+                                    <div key={entry.id} className="uap-card group relative">
+                                        <Link
+                                            href={`/game/${entry.game_id}`}
+                                            className="block aspect-video"
+                                            style={{ background: 'var(--uap-bg-deep)' }}
+                                        >
+                                            {entry.game.image && (
+                                                <img
+                                                    src={`/uploads/games/${entry.game_id}/${entry.game.image}`}
+                                                    alt={entry.game.title}
+                                                    className="h-full w-full object-cover"
+                                                />
+                                            )}
                                         </Link>
-                                        <div className="mt-1 flex items-center justify-between text-xs" style={{ color: 'var(--uap-text-dim)' }}>
-                                            <span>{entry.game.genre}</span>
-                                            {entry.hours_played > 0 && <span>{entry.hours_played}h</span>}
+
+                                        <div className="absolute top-2 right-2 flex gap-1">
+                                            {collections.length > 0 && (
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <button
+                                                            style={{ background: 'rgba(0,0,0,0.6)', color: 'var(--uap-text-dim)' }}
+                                                            className="flex h-7 w-7 items-center justify-center"
+                                                            title="Add to collection"
+                                                        >
+                                                            <FolderPlus size={13} />
+                                                        </button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        {collections.map((c) => (
+                                                            <DropdownMenuItem
+                                                                key={c.id}
+                                                                onSelect={(e) => {
+                                                                    e.preventDefault();
+                                                                    toggleGameInCollection(c.id, entry.game_id);
+                                                                }}
+                                                                className="flex items-center gap-2"
+                                                            >
+                                                                <span className="flex h-4 w-4 items-center justify-center">
+                                                                    {inCollectionIds.includes(c.id) && <Check size={13} />}
+                                                                </span>
+                                                                {c.name}
+                                                            </DropdownMenuItem>
+                                                        ))}
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            )}
+                                            <button
+                                                onClick={() => toggleFavorite(entry.game_id)}
+                                                style={{
+                                                    background: 'rgba(0,0,0,0.6)',
+                                                    color: entry.is_favorite ? 'var(--uap-accent-gold)' : 'var(--uap-text-dim)',
+                                                }}
+                                                className="flex h-7 w-7 items-center justify-center text-sm"
+                                                title={entry.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'}
+                                            >
+                                                {entry.is_favorite ? '★' : '☆'}
+                                            </button>
+                                        </div>
+
+                                        <div className="p-2">
+                                            <Link href={`/game/${entry.game_id}`} className="uap-game-card-title block hover:underline">
+                                                {entry.game.title}
+                                            </Link>
+                                            <div className="mt-1 flex items-center justify-between text-xs" style={{ color: 'var(--uap-text-dim)' }}>
+                                                <span>{entry.game.genre}</span>
+                                                {entry.hours_played > 0 && <span>{entry.hours_played}h</span>}
+                                            </div>
+
+                                            <div className="mt-2 flex gap-1.5">
+                                                <button
+                                                    onClick={() => toggleInstalled(entry.game_id)}
+                                                    className={`uap-btn uap-btn-sm flex-1 ${entry.is_installed ? 'uap-btn-outline' : 'uap-btn-primary'}`}
+                                                >
+                                                    {entry.is_installed ? 'Uninstall' : 'Install'}
+                                                </button>
+                                                <button
+                                                    onClick={() => playGame(entry.game_id)}
+                                                    disabled={!entry.is_installed}
+                                                    title={entry.is_installed ? 'Log a play session' : 'Install first to play'}
+                                                    className="uap-btn uap-btn-outline uap-btn-sm flex-1 disabled:cursor-not-allowed disabled:opacity-40"
+                                                >
+                                                    Play
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={() => toggleFavorite(entry.game_id)}
-                                        style={{ background: 'rgba(0,0,0,0.6)', color: entry.is_favorite ? 'var(--uap-accent-gold)' : 'var(--uap-text-dim)' }}
-                                        className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center text-sm"
-                                        title={entry.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'}
-                                    >
-                                        {entry.is_favorite ? '★' : '☆'}
-                                    </button>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </section>

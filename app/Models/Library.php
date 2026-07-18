@@ -17,6 +17,7 @@ class Library extends Model
         'user_id',
         'game_id',
         'hours_played',
+        'last_played_at',
         'is_installed',
         'is_favorite',
         'purchased_at',
@@ -28,6 +29,7 @@ class Library extends Model
             'is_installed' => 'boolean',
             'is_favorite' => 'boolean',
             'purchased_at' => 'datetime',
+            'last_played_at' => 'datetime',
         ];
     }
 
@@ -39,5 +41,10 @@ class Library extends Model
     public function game()
     {
         return $this->belongsTo(Game::class);
+    }
+
+    public function collections()
+    {
+        return $this->belongsToMany(Collection::class, 'collection_library');
     }
 }

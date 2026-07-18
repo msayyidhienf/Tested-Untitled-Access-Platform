@@ -13,6 +13,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\FriendController;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\GuideController;
+use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\LibraryController;
 use App\Http\Controllers\MidtransNotificationController;
 use App\Http\Controllers\NotificationController;
@@ -61,6 +62,12 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/library', [LibraryController::class, 'index'])->name('library.index');
     Route::post('/library/favorite/{game}', [LibraryController::class, 'toggleFavorite'])->name('library.toggleFavorite');
+    Route::post('/library/install/{game}', [LibraryController::class, 'toggleInstalled'])->name('library.toggleInstalled');
+    Route::post('/library/play/{game}', [LibraryController::class, 'play'])->name('library.play');
+
+    Route::post('/collections', [CollectionController::class, 'store'])->name('collections.store');
+    Route::post('/collections/{collection}/delete', [CollectionController::class, 'destroy'])->name('collections.destroy');
+    Route::post('/collections/{collection}/games/{game}', [CollectionController::class, 'toggleGame'])->name('collections.toggleGame');
 
     Route::post('/community/posts', [PostController::class, 'store'])->name('posts.store');
     Route::post('/community/posts/{post}/update', [PostController::class, 'update'])->name('posts.update');

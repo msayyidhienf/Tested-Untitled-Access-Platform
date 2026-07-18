@@ -26,14 +26,19 @@ class LibrarySeeder extends Seeder
             $ownedGames = $games->random(min($ownedCount, $games->count()));
 
             foreach ($ownedGames as $game) {
+                $purchasedAt = now()->subDays(rand(1, 180));
+                $isInstalled = (bool) rand(0, 1);
+
                 Library::firstOrCreate([
                     'user_id' => $user->id,
                     'game_id' => $game->id,
                 ], [
                     'hours_played' => rand(1, 250),
-                    'is_installed' => (bool) rand(0, 1),
+                    // Only installed games plausibly have a play history.
+                    'last_played_at' => $isInstalled ? now()->subDays(rand(0, 30)) : null,
+                    'is_installed' => $isInstalled,
                     'is_favorite' => rand(0, 4) === 0,
-                    'purchased_at' => now()->subDays(rand(1, 180)),
+                    'purchased_at' => $purchasedAt,
                 ]);
             }
         }
