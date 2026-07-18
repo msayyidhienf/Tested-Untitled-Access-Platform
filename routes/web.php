@@ -30,6 +30,7 @@ Route::redirect('/', '/store')->name('home');
 Route::post('/midtrans/notification', [MidtransNotificationController::class, 'handle'])->name('midtrans.notification');
 
 Route::get('/store', [GameController::class, 'index'])->name('store.index');
+Route::get('/store/search', [GameController::class, 'search'])->name('store.search');
 Route::get('/game/{game}', [GameController::class, 'show'])->name('store.show');
 
 Route::get('/community', [PostController::class, 'index'])->name('community.index');

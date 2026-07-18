@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Game;
 use App\Models\Cart;
 use App\Models\Library;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -14,6 +15,15 @@ class GameController extends Controller
     {
         $genre = $request->query('genre');
         $filter = $request->query('filter');
+        $q = trim((string) $request->query('q', ''));
+
+        if ($q !== '') {
+            return Inertia::render('store/index', [
+                'mode' => 'filtered',
+                'filterTitle' => 'Search results for "'.$q.'"',
+                'games' => Game::where('title', 'like', "%{$q}%")->orderByDesc('created_at')->get(),
+            ]);
+        }
 
         if ($genre) {
             return Inertia::render('store/index', [
@@ -57,6 +67,22 @@ class GameController extends Controller
             'onSaleGames' => Game::where('discount', '>', 0)->orderByDesc('discount')->get(),
             'freeGames' => Game::where('is_free', true)->get(),
         ]);
+    }
+
+    public function search(Request $request): JsonResponse
+    {
+        $q = trim((string) $request->query('q', ''));
+
+        if ($q === '') {
+            return response()->json(['results' => []]);
+        }
+
+        $games = Game::where('title', 'like', "%{$q}%")
+            ->orderByDesc('created_at')
+            ->limit(8)
+            ->get(['id', 'title', 'genre', 'price', 'discount', 'is_free', 'image']);
+
+        return response()->json(['results' => $games]);
     }
 
     public function show(Game $game)

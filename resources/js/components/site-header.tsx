@@ -1,7 +1,8 @@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { type AppNotification, type SharedData } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
-import { Bell, ChevronDown } from 'lucide-react';
+import { Bell, ChevronDown, Search, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 const NAV_ITEMS = [
     { label: 'Store', href: '/store', match: '/store' },
@@ -36,6 +37,138 @@ function openNotification(notification: AppNotification) {
     }
 }
 
+interface SearchResult {
+    id: number;
+    title: string;
+    genre: string | null;
+    price: string;
+    discount: number;
+    is_free: boolean;
+    image: string | null;
+}
+
+function StoreSearch() {
+    const [query, setQuery] = useState('');
+    const [results, setResults] = useState<SearchResult[]>([]);
+    const [open, setOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const boxRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const q = query.trim();
+        if (q.length < 2) {
+            setResults([]);
+            setLoading(false);
+            return;
+        }
+
+        setLoading(true);
+        const handle = setTimeout(() => {
+            fetch(`/store/search?q=${encodeURIComponent(q)}`, { headers: { Accept: 'application/json' } })
+                .then((res) => res.json())
+                .then((data) => setResults(data.results ?? []))
+                .finally(() => setLoading(false));
+        }, 250);
+
+        return () => clearTimeout(handle);
+    }, [query]);
+
+    useEffect(() => {
+        const onClickOutside = (e: MouseEvent) => {
+            if (boxRef.current && !boxRef.current.contains(e.target as Node)) {
+                setOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', onClickOutside);
+        return () => document.removeEventListener('mousedown', onClickOutside);
+    }, []);
+
+    const goToResults = () => {
+        const q = query.trim();
+        if (!q) return;
+        setOpen(false);
+        router.visit(`/store?q=${encodeURIComponent(q)}`);
+    };
+
+    const clear = () => {
+        setQuery('');
+        setResults([]);
+    };
+
+    return (
+        <div ref={boxRef} className="relative w-full max-w-md">
+            <div className="uap-search-box">
+                <Search size={15} style={{ color: 'var(--uap-text-dim)' }} />
+                <input
+                    type="text"
+                    value={query}
+                    onChange={(e) => {
+                        setQuery(e.target.value);
+                        setOpen(true);
+                    }}
+                    onFocus={() => setOpen(true)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') goToResults();
+                        if (e.key === 'Escape') setOpen(false);
+                    }}
+                    placeholder="Search the store..."
+                    style={fontMonda}
+                    className="uap-search-input"
+                />
+                {query && (
+                    <button type="button" onClick={clear} className="flex-shrink-0" aria-label="Clear search">
+                        <X size={14} style={{ color: 'var(--uap-text-dim)' }} />
+                    </button>
+                )}
+            </div>
+
+            {open && query.trim().length >= 2 && (
+                <div className="uap-search-dropdown">
+                    {loading ? (
+                        <div className="uap-search-empty">Searching...</div>
+                    ) : results.length === 0 ? (
+                        <div className="uap-search-empty">No games found for "{query.trim()}".</div>
+                    ) : (
+                        <>
+                            {results.map((game) => {
+                                const discounted = game.discount > 0 ? Number(game.price) * (1 - game.discount / 100) : null;
+                                return (
+                                    <Link
+                                        key={game.id}
+                                        href={`/game/${game.id}`}
+                                        onClick={() => setOpen(false)}
+                                        className="uap-search-result"
+                                    >
+                                        <div className="uap-search-result-thumb">
+                                            {game.image && <img src={`/uploads/games/${game.id}/${game.image}`} alt={game.title} />}
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="uap-search-result-title">{game.title}</p>
+                                            <p className="uap-search-result-genre">{game.genre}</p>
+                                        </div>
+                                        <div className="flex-shrink-0 text-right text-xs font-semibold">
+                                            {game.is_free ? (
+                                                <span style={{ color: 'var(--uap-accent-green)' }}>Free</span>
+                                            ) : discounted ? (
+                                                <span>{formatUcash(discounted)}</span>
+                                            ) : (
+                                                <span>{formatUcash(game.price)}</span>
+                                            )}
+                                        </div>
+                                    </Link>
+                                );
+                            })}
+                            <button type="button" onClick={goToResults} className="uap-search-see-all">
+                                See all results for "{query.trim()}"
+                            </button>
+                        </>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
 export default function SiteHeader() {
     const { auth, cartCount, ucashBalance, notifications, unreadNotificationCount } = usePage<SharedData>().props;
     const currentUrl = usePage().url;
@@ -54,7 +187,7 @@ export default function SiteHeader() {
                 <img src="/images/logo.png" alt="UAP" className="h-[34px] w-auto" />
             </Link>
 
-            <nav className="ml-8 flex flex-1 items-center gap-0.5">
+            <nav className="ml-8 flex flex-shrink-0 items-center gap-0.5">
                 {NAV_ITEMS.map((item) => {
                     const active = currentUrl.startsWith(item.match);
                     return (
@@ -74,6 +207,10 @@ export default function SiteHeader() {
                     );
                 })}
             </nav>
+
+            <div className="flex flex-1 justify-center px-6">
+                <StoreSearch />
+            </div>
 
             <div className="ml-auto flex items-center gap-1.5">
                 <div
