@@ -15,6 +15,8 @@ class Achievement extends Model
         'name',
         'description',
         'rarity',
+        'type',
+        'threshold',
     ];
 
     public function users()

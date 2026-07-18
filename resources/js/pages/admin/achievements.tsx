@@ -2,11 +2,25 @@ import AdminLayout from '@/layouts/admin-layout';
 import { Head, router, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
+type AchievementType =
+    | ''
+    | 'games_owned'
+    | 'hours_played'
+    | 'reviews_written'
+    | 'posts_written'
+    | 'guides_written'
+    | 'friends_count'
+    | 'sale_purchase'
+    | 'free_game_added'
+    | 'early_adopter';
+
 interface AchievementRow {
     id: number;
     name: string;
     description: string;
     rarity: 'Common' | 'Rare' | 'Epic' | 'Legendary';
+    type: AchievementType | null;
+    threshold: number | null;
     users_count: number;
 }
 
@@ -22,6 +36,18 @@ const RARITY_CLASS: Record<string, string> = {
     Legendary: 'uap-tag-warning',
 };
 
+const TYPE_LABEL: Record<Exclude<AchievementType, ''>, string> = {
+    games_owned: 'Games owned (count)',
+    hours_played: 'Total hours played',
+    reviews_written: 'Reviews written',
+    posts_written: 'Community posts written',
+    guides_written: 'Guides published',
+    friends_count: 'Accepted friends',
+    sale_purchase: 'Bought a discounted game',
+    free_game_added: 'Added a free-to-play game',
+    early_adopter: 'Among the first N registered users',
+};
+
 const inputStyle = {
     background: 'var(--uap-bg-deep)',
     border: '1px solid var(--uap-border)',
@@ -33,6 +59,8 @@ function AchievementForm({ editAchievement, onDone }: { editAchievement: Achieve
         name: editAchievement?.name ?? '',
         description: editAchievement?.description ?? '',
         rarity: editAchievement?.rarity ?? 'Common',
+        type: (editAchievement?.type ?? '') as AchievementType,
+        threshold: editAchievement?.threshold ?? '',
     });
 
     const submit: FormEventHandler = (e) => {
@@ -114,6 +142,51 @@ function AchievementForm({ editAchievement, onDone }: { editAchievement: Achieve
                     </p>
                 )}
             </div>
+            <div className="mt-4 grid grid-cols-2 gap-4">
+                <div>
+                    <label className="mb-1 block text-xs" style={{ color: 'var(--uap-text-secondary)' }}>
+                        Unlock condition
+                    </label>
+                    <select
+                        value={data.type}
+                        onChange={(e) => setData('type', e.target.value as AchievementType)}
+                        style={inputStyle}
+                        className="w-full px-3 py-2 text-sm outline-none"
+                    >
+                        <option value="">Manual only (no auto-unlock)</option>
+                        {Object.entries(TYPE_LABEL).map(([value, label]) => (
+                            <option key={value} value={value}>
+                                {label}
+                            </option>
+                        ))}
+                    </select>
+                    {errors.type && (
+                        <p className="mt-1 text-xs" style={{ color: 'var(--uap-accent-red)' }}>
+                            {errors.type}
+                        </p>
+                    )}
+                </div>
+                <div>
+                    <label className="mb-1 block text-xs" style={{ color: 'var(--uap-text-secondary)' }}>
+                        Threshold {data.type === 'early_adopter' && '(user ID cutoff)'}
+                    </label>
+                    <input
+                        type="number"
+                        min={1}
+                        value={data.threshold}
+                        onChange={(e) => setData('threshold', e.target.value === '' ? '' : Number(e.target.value))}
+                        disabled={!data.type}
+                        placeholder={data.type ? 'e.g. 5' : '—'}
+                        style={inputStyle}
+                        className="w-full px-3 py-2 text-sm outline-none disabled:opacity-40"
+                    />
+                    {errors.threshold && (
+                        <p className="mt-1 text-xs" style={{ color: 'var(--uap-accent-red)' }}>
+                            {errors.threshold}
+                        </p>
+                    )}
+                </div>
+            </div>
         </form>
     );
 }
@@ -144,6 +217,7 @@ export default function AdminAchievements({ achievements, editAchievement }: Ach
                             <th className="px-4 py-3">Name</th>
                             <th className="px-4 py-3">Description</th>
                             <th className="px-4 py-3">Rarity</th>
+                            <th className="px-4 py-3">Unlock Condition</th>
                             <th className="px-4 py-3">Unlocked By</th>
                             <th className="px-4 py-3">Actions</th>
                         </tr>
@@ -151,7 +225,7 @@ export default function AdminAchievements({ achievements, editAchievement }: Ach
                     <tbody>
                         {achievements.length === 0 && (
                             <tr>
-                                <td colSpan={5} className="px-4 py-10 text-center" style={{ color: 'var(--uap-text-dim)' }}>
+                                <td colSpan={6} className="px-4 py-10 text-center" style={{ color: 'var(--uap-text-dim)' }}>
                                     No achievements yet.
                                 </td>
                             </tr>
@@ -164,6 +238,15 @@ export default function AdminAchievements({ achievements, editAchievement }: Ach
                                 </td>
                                 <td className="px-4 py-3">
                                     <span className={`uap-tag ${RARITY_CLASS[ach.rarity]}`}>{ach.rarity}</span>
+                                </td>
+                                <td className="px-4 py-3 text-xs" style={{ color: 'var(--uap-text-secondary)' }}>
+                                    {ach.type ? (
+                                        <>
+                                            {TYPE_LABEL[ach.type as Exclude<AchievementType, ''>]} ≥ {ach.threshold}
+                                        </>
+                                    ) : (
+                                        <span style={{ color: 'var(--uap-text-dim)' }}>Manual only</span>
+                                    )}
                                 </td>
                                 <td className="px-4 py-3" style={{ color: 'var(--uap-text-secondary)' }}>
                                     {ach.users_count} user{ach.users_count !== 1 ? 's' : ''}

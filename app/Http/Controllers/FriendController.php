@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Friend;
 use App\Models\Notification;
 use App\Models\User;
+use App\Services\AchievementService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 
@@ -55,6 +56,9 @@ class FriendController extends Controller
             'message' => "{$viewer->username} accepted your friend request.",
             'link' => "/profile/{$viewer->id}",
         ]);
+
+        AchievementService::check($viewer, 'friends_count');
+        AchievementService::check($user, 'friends_count');
 
         return back();
     }

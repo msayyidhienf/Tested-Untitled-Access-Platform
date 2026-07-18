@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Notification;
 use App\Models\WalletTransaction;
+use App\Services\AchievementService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -121,6 +122,10 @@ class CartController extends Controller
                 'link' => '/library',
             ]);
         });
+
+        foreach (['games_owned', 'hours_played', 'sale_purchase', 'free_game_added'] as $type) {
+            AchievementService::check($user, $type);
+        }
 
         return redirect()->route('library.index');
     }

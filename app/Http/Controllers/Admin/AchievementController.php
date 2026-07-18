@@ -47,6 +47,8 @@ class AchievementController extends Controller
             'name' => 'required|string|max:100',
             'description' => 'required|string|max:255',
             'rarity' => 'required|in:Common,Rare,Epic,Legendary',
+            'type' => 'nullable|in:games_owned,hours_played,reviews_written,posts_written,guides_written,friends_count,sale_purchase,free_game_added,early_adopter',
+            'threshold' => 'nullable|required_with:type|integer|min:1',
         ]);
     }
 }

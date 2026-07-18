@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Game;
 use App\Models\Library;
 use App\Models\Review;
+use App\Services\AchievementService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -41,6 +42,8 @@ class ReviewController extends Controller
             'user_id' => Auth::id(),
             ...$data,
         ]);
+
+        AchievementService::check(Auth::user(), 'reviews_written');
 
         return redirect()->route('community.reviews');
     }

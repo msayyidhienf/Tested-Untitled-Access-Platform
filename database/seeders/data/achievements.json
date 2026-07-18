@@ -1,1 +1,16 @@
-[{"name":"First Step","description":"Purchase your first game on UAP.","rarity":"Common"},{"name":"Game Collector","description":"Own 5 or more games in your library.","rarity":"Rare"},{"name":"Dedicated Gamer","description":"Log a total of 10 hours across all games.","rarity":"Common"},{"name":"Weekend Warrior","description":"Log a total of 50 hours across all games.","rarity":"Rare"},{"name":"Century Club","description":"Log a total of 100 hours across all games.","rarity":"Epic"},{"name":"Legendary Hours","description":"Log a total of 500 hours across all games.","rarity":"Legendary"},{"name":"First Review","description":"Write your first game review.","rarity":"Common"},{"name":"Community Voice","description":"Write reviews for 3 or more different games.","rarity":"Rare"},{"name":"Forum Regular","description":"Create your first post in the community.","rarity":"Common"},{"name":"Scholar","description":"Publish a guide to help other players.","rarity":"Rare"},{"name":"Bargain Hunter","description":"Purchase a game that is currently on sale.","rarity":"Common"},{"name":"Free Loader","description":"Add a free-to-play game to your library.","rarity":"Common"},{"name":"Social Butterfly","description":"Have 3 or more accepted friends on UAP.","rarity":"Rare"},{"name":"Early Adopter","description":"One of the first players to join the UAP platform.","rarity":"Legendary"}]
+[
+    {"name":"First Step","description":"Purchase your first game on UAP.","rarity":"Common","type":"games_owned","threshold":1},
+    {"name":"Game Collector","description":"Own 5 or more games in your library.","rarity":"Rare","type":"games_owned","threshold":5},
+    {"name":"Dedicated Gamer","description":"Log a total of 10 hours across all games.","rarity":"Common","type":"hours_played","threshold":10},
+    {"name":"Weekend Warrior","description":"Log a total of 50 hours across all games.","rarity":"Rare","type":"hours_played","threshold":50},
+    {"name":"Century Club","description":"Log a total of 100 hours across all games.","rarity":"Epic","type":"hours_played","threshold":100},
+    {"name":"Legendary Hours","description":"Log a total of 500 hours across all games.","rarity":"Legendary","type":"hours_played","threshold":500},
+    {"name":"First Review","description":"Write your first game review.","rarity":"Common","type":"reviews_written","threshold":1},
+    {"name":"Community Voice","description":"Write reviews for 3 or more different games.","rarity":"Rare","type":"reviews_written","threshold":3},
+    {"name":"Forum Regular","description":"Create your first post in the community.","rarity":"Common","type":"posts_written","threshold":1},
+    {"name":"Scholar","description":"Publish a guide to help other players.","rarity":"Rare","type":"guides_written","threshold":1},
+    {"name":"Bargain Hunter","description":"Purchase a game that is currently on sale.","rarity":"Common","type":"sale_purchase","threshold":1},
+    {"name":"Free Loader","description":"Add a free-to-play game to your library.","rarity":"Common","type":"free_game_added","threshold":1},
+    {"name":"Social Butterfly","description":"Have 3 or more accepted friends on UAP.","rarity":"Rare","type":"friends_count","threshold":3},
+    {"name":"Early Adopter","description":"One of the first players to join the UAP platform.","rarity":"Legendary","type":"early_adopter","threshold":50}
+]
