@@ -57,6 +57,111 @@ function timeAgo(value: string) {
     return `${days}d ago`;
 }
 
+function LibraryGameCard({
+    entry,
+    collections,
+    inCollectionIds,
+    subtitle,
+    onToggleFavorite,
+    onToggleInstalled,
+    onPlay,
+    onToggleCollection,
+}: {
+    entry: LibraryEntry;
+    collections: CollectionRow[];
+    inCollectionIds: number[];
+    subtitle?: string;
+    onToggleFavorite: (gameId: number) => void;
+    onToggleInstalled: (gameId: number) => void;
+    onPlay: (gameId: number) => void;
+    onToggleCollection: (collectionId: number, gameId: number) => void;
+}) {
+    return (
+        <div className="uap-card group relative">
+            <Link href={`/game/${entry.game_id}`} className="block aspect-video" style={{ background: 'var(--uap-bg-deep)' }}>
+                {entry.game.image && (
+                    <img
+                        src={`/uploads/games/${entry.game_id}/${entry.game.image}`}
+                        alt={entry.game.title}
+                        className="h-full w-full object-cover"
+                    />
+                )}
+            </Link>
+
+            <div className="absolute top-2 right-2 flex gap-1">
+                {collections.length > 0 && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button
+                                style={{ background: 'rgba(0,0,0,0.6)', color: 'var(--uap-text-dim)' }}
+                                className="flex h-7 w-7 items-center justify-center"
+                                title="Add to collection"
+                            >
+                                <FolderPlus size={13} />
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            {collections.map((c) => (
+                                <DropdownMenuItem
+                                    key={c.id}
+                                    onSelect={(e) => {
+                                        e.preventDefault();
+                                        onToggleCollection(c.id, entry.game_id);
+                                    }}
+                                    className="flex items-center gap-2"
+                                >
+                                    <span className="flex h-4 w-4 items-center justify-center">
+                                        {inCollectionIds.includes(c.id) && <Check size={13} />}
+                                    </span>
+                                    {c.name}
+                                </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
+                <button
+                    onClick={() => onToggleFavorite(entry.game_id)}
+                    style={{
+                        background: 'rgba(0,0,0,0.6)',
+                        color: entry.is_favorite ? 'var(--uap-accent-gold)' : 'var(--uap-text-dim)',
+                    }}
+                    className="flex h-7 w-7 items-center justify-center text-sm"
+                    title={entry.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'}
+                >
+                    {entry.is_favorite ? '★' : '☆'}
+                </button>
+            </div>
+
+            <div className="p-2">
+                <Link href={`/game/${entry.game_id}`} className="uap-game-card-title block hover:underline">
+                    {entry.game.title}
+                </Link>
+                <div className="mt-1 flex items-center justify-between text-xs" style={{ color: 'var(--uap-text-dim)' }}>
+                    <span>{subtitle ?? entry.game.genre}</span>
+                    {!subtitle && entry.hours_played > 0 && <span>{entry.hours_played}h</span>}
+                </div>
+
+                <div className="mt-2 flex gap-1.5">
+                    <button
+                        onClick={() => onToggleInstalled(entry.game_id)}
+                        className={`uap-btn uap-btn-sm flex-1 ${entry.is_installed ? 'uap-btn-outline' : 'uap-btn-primary'}`}
+                    >
+                        {entry.is_installed ? 'Uninstall' : 'Install'}
+                    </button>
+                    <button
+                        onClick={() => onPlay(entry.game_id)}
+                        disabled={!entry.is_installed}
+                        title={entry.is_installed ? 'Log a play session' : 'Install first to play'}
+                        className="uap-btn uap-btn-outline uap-btn-sm flex-1 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                        Play
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default function LibraryIndex({
     tab,
     collectionId,
@@ -239,22 +344,19 @@ export default function LibraryIndex({
                 {tab === 'all' && !search && recentlyPlayed.length > 0 && (
                     <section className="mb-8">
                         <h2 className="uap-section-title">Recently Played</h2>
-                        <div className="flex gap-3 overflow-x-auto">
+                        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
                             {recentlyPlayed.map((entry) => (
-                                <Link key={entry.id} href={`/game/${entry.game_id}`} className="uap-card flex w-56 flex-shrink-0 items-center gap-3 p-3">
-                                    <div
-                                        className="flex h-10 w-10 flex-shrink-0 items-center justify-center text-sm font-bold"
-                                        style={{ background: 'var(--uap-bg-hover)', color: 'var(--uap-text-primary)' }}
-                                    >
-                                        {entry.game.title.slice(0, 2).toUpperCase()}
-                                    </div>
-                                    <div className="overflow-hidden">
-                                        <p className="truncate text-sm font-medium">{entry.game.title}</p>
-                                        <p className="text-xs" style={{ color: 'var(--uap-text-dim)' }}>
-                                            {entry.last_played_at ? `Played ${timeAgo(entry.last_played_at)}` : 'Not played yet'}
-                                        </p>
-                                    </div>
-                                </Link>
+                                <LibraryGameCard
+                                    key={entry.id}
+                                    entry={entry}
+                                    collections={collections}
+                                    inCollectionIds={entryCollectionIds[entry.game_id] ?? []}
+                                    subtitle={entry.last_played_at ? `Played ${timeAgo(entry.last_played_at)}` : undefined}
+                                    onToggleFavorite={toggleFavorite}
+                                    onToggleInstalled={toggleInstalled}
+                                    onPlay={playGame}
+                                    onToggleCollection={toggleGameInCollection}
+                                />
                             ))}
                         </div>
                     </section>
@@ -299,98 +401,18 @@ export default function LibraryIndex({
                         </div>
                     ) : (
                         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-                            {entries.map((entry) => {
-                                const inCollectionIds = entryCollectionIds[entry.game_id] ?? [];
-
-                                return (
-                                    <div key={entry.id} className="uap-card group relative">
-                                        <Link
-                                            href={`/game/${entry.game_id}`}
-                                            className="block aspect-video"
-                                            style={{ background: 'var(--uap-bg-deep)' }}
-                                        >
-                                            {entry.game.image && (
-                                                <img
-                                                    src={`/uploads/games/${entry.game_id}/${entry.game.image}`}
-                                                    alt={entry.game.title}
-                                                    className="h-full w-full object-cover"
-                                                />
-                                            )}
-                                        </Link>
-
-                                        <div className="absolute top-2 right-2 flex gap-1">
-                                            {collections.length > 0 && (
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <button
-                                                            style={{ background: 'rgba(0,0,0,0.6)', color: 'var(--uap-text-dim)' }}
-                                                            className="flex h-7 w-7 items-center justify-center"
-                                                            title="Add to collection"
-                                                        >
-                                                            <FolderPlus size={13} />
-                                                        </button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        {collections.map((c) => (
-                                                            <DropdownMenuItem
-                                                                key={c.id}
-                                                                onSelect={(e) => {
-                                                                    e.preventDefault();
-                                                                    toggleGameInCollection(c.id, entry.game_id);
-                                                                }}
-                                                                className="flex items-center gap-2"
-                                                            >
-                                                                <span className="flex h-4 w-4 items-center justify-center">
-                                                                    {inCollectionIds.includes(c.id) && <Check size={13} />}
-                                                                </span>
-                                                                {c.name}
-                                                            </DropdownMenuItem>
-                                                        ))}
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            )}
-                                            <button
-                                                onClick={() => toggleFavorite(entry.game_id)}
-                                                style={{
-                                                    background: 'rgba(0,0,0,0.6)',
-                                                    color: entry.is_favorite ? 'var(--uap-accent-gold)' : 'var(--uap-text-dim)',
-                                                }}
-                                                className="flex h-7 w-7 items-center justify-center text-sm"
-                                                title={entry.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'}
-                                            >
-                                                {entry.is_favorite ? '★' : '☆'}
-                                            </button>
-                                        </div>
-
-                                        <div className="p-2">
-                                            <Link href={`/game/${entry.game_id}`} className="uap-game-card-title block hover:underline">
-                                                {entry.game.title}
-                                            </Link>
-                                            <div className="mt-1 flex items-center justify-between text-xs" style={{ color: 'var(--uap-text-dim)' }}>
-                                                <span>{entry.game.genre}</span>
-                                                {entry.hours_played > 0 && <span>{entry.hours_played}h</span>}
-                                            </div>
-
-                                            <div className="mt-2 flex gap-1.5">
-                                                <button
-                                                    onClick={() => toggleInstalled(entry.game_id)}
-                                                    className={`uap-btn uap-btn-sm flex-1 ${entry.is_installed ? 'uap-btn-outline' : 'uap-btn-primary'}`}
-                                                >
-                                                    {entry.is_installed ? 'Uninstall' : 'Install'}
-                                                </button>
-                                                <button
-                                                    onClick={() => playGame(entry.game_id)}
-                                                    disabled={!entry.is_installed}
-                                                    title={entry.is_installed ? 'Log a play session' : 'Install first to play'}
-                                                    className="uap-btn uap-btn-outline uap-btn-sm flex-1 disabled:cursor-not-allowed disabled:opacity-40"
-                                                >
-                                                    Play
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                            {entries.map((entry) => (
+                                <LibraryGameCard
+                                    key={entry.id}
+                                    entry={entry}
+                                    collections={collections}
+                                    inCollectionIds={entryCollectionIds[entry.game_id] ?? []}
+                                    onToggleFavorite={toggleFavorite}
+                                    onToggleInstalled={toggleInstalled}
+                                    onPlay={playGame}
+                                    onToggleCollection={toggleGameInCollection}
+                                />
+                            ))}
                         </div>
                     )}
                 </section>
