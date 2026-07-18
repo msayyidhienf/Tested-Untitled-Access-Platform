@@ -60,6 +60,33 @@
     --uap-topbar-h: 58px;
 }
 
+/* ============================================================
+   SCROLLBAR — dark, on-brand track/thumb for the whole app
+   ============================================================ */
+html {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(184, 50, 50, 0.45) var(--uap-bg-deep);
+}
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+::-webkit-scrollbar-track {
+    background: var(--uap-bg-deep);
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(184, 50, 50, 0.45);
+    border: 2px solid var(--uap-bg-deep);
+    background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--uap-accent);
+    background-clip: padding-box;
+}
+::-webkit-scrollbar-corner {
+    background: var(--uap-bg-deep);
+}
+
 .uap-page {
     background-color: var(--uap-bg-void);
     color: var(--uap-text-primary);
