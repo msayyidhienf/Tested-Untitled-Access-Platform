@@ -1,4 +1,5 @@
 import SiteLayout from '@/components/site-layout';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { type Game, type SharedData } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Trash2 } from 'lucide-react';
@@ -28,6 +29,8 @@ export default function CartIndex({ items, total }: CartIndexProps) {
     const { flash } = usePage<SharedData>().props;
     const [removingId, setRemovingId] = useState<number | null>(null);
     const [checkingOut, setCheckingOut] = useState(false);
+    const [agree, setAgree] = useState(false);
+    const [dialogOpen, setDialogOpen] = useState(false);
 
     const savings = items.reduce((sum, item) => {
         const price = Number(item.game.price);
@@ -39,10 +42,17 @@ export default function CartIndex({ items, total }: CartIndexProps) {
         router.delete(`/cart/${gameId}`, { preserveScroll: true, onFinish: () => setRemovingId(null) });
     };
 
-    const checkout = () => {
-        if (checkingOut) return;
+    const confirmCheckout = () => {
+        if (checkingOut || !agree) return;
         setCheckingOut(true);
-        router.post('/cart/checkout', {}, { onFinish: () => setCheckingOut(false) });
+        router.post(
+            '/cart/checkout',
+            { agree: true },
+            {
+                onFinish: () => setCheckingOut(false),
+                onError: () => setDialogOpen(false),
+            },
+        );
     };
 
     return (
@@ -168,9 +178,68 @@ export default function CartIndex({ items, total }: CartIndexProps) {
                                 <span className="font-bold">Total</span>
                                 <span className="text-lg font-extrabold">{formatPrice(total)}</span>
                             </div>
-                            <button onClick={checkout} disabled={checkingOut} className="uap-btn uap-btn-primary mb-2 w-full disabled:opacity-60">
-                                {checkingOut ? 'Processing...' : 'Checkout'}
-                            </button>
+                            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                                <DialogTrigger asChild>
+                                    <button className="uap-btn uap-btn-primary mb-2 w-full">Checkout</button>
+                                </DialogTrigger>
+                                <DialogContent
+                                    style={{
+                                        background: 'var(--uap-bg-card)',
+                                        border: '1px solid var(--uap-border)',
+                                        color: 'var(--uap-text-primary)',
+                                    }}
+                                >
+                                    <DialogHeader>
+                                        <DialogTitle style={{ fontFamily: "'Monda', sans-serif" }}>Confirm Purchase</DialogTitle>
+                                    </DialogHeader>
+
+                                    <div className="flex max-h-48 flex-col gap-1.5 overflow-y-auto">
+                                        {items.map((item) => (
+                                            <div key={item.id} className="flex justify-between text-sm" style={{ color: 'var(--uap-text-secondary)' }}>
+                                                <span className="truncate">{item.game.title}</span>
+                                                <span className="flex-shrink-0" style={{ color: 'var(--uap-text-primary)' }}>
+                                                    {formatPrice(itemPrice(item.game))}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="flex items-center justify-between pt-1" style={{ borderTop: '1px solid var(--uap-border)' }}>
+                                        <span className="font-bold">Total</span>
+                                        <span className="text-lg font-extrabold">{formatPrice(total)}</span>
+                                    </div>
+
+                                    <p className="text-xs" style={{ color: 'var(--uap-text-dim)' }}>
+                                        Payment will be deducted from your Ucash Wallet balance immediately.
+                                    </p>
+
+                                    <label className="flex cursor-pointer items-start gap-2 pt-1 text-xs" style={{ color: 'var(--uap-text-secondary)' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={agree}
+                                            onChange={(e) => setAgree(e.target.checked)}
+                                            className="mt-0.5"
+                                        />
+                                        <span>
+                                            I have read and agree to the UAP{' '}
+                                            <Link href="/support/refund" target="_blank" style={{ color: 'var(--uap-accent)' }} className="hover:underline">
+                                                Terms of Service &amp; Refund Policy
+                                            </Link>
+                                            , and understand that digital purchases are final.
+                                        </span>
+                                    </label>
+
+                                    <DialogFooter>
+                                        <button
+                                            onClick={confirmCheckout}
+                                            disabled={!agree || checkingOut}
+                                            className="uap-btn uap-btn-primary w-full disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            {checkingOut ? 'Processing...' : `Confirm & Pay ${formatPrice(total)}`}
+                                        </button>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
                             <Link href="/store" className="uap-btn uap-btn-outline w-full">
                                 Continue Shopping
                             </Link>

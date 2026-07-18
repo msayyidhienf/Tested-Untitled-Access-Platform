@@ -17,6 +17,7 @@ use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\LibraryController;
 use App\Http\Controllers\MidtransNotificationController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReviewController;
@@ -59,6 +60,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/cart/add/{game}', [CartController::class, 'store'])->name('cart.add');
     Route::delete('/cart/{game}', [CartController::class, 'destroy'])->name('cart.destroy');
     Route::post('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
+
+    Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
 
     Route::get('/library', [LibraryController::class, 'index'])->name('library.index');
     Route::post('/library/favorite/{game}', [LibraryController::class, 'toggleFavorite'])->name('library.toggleFavorite');

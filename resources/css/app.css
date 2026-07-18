@@ -70,6 +70,10 @@ html {
        position:sticky on descendants (unlike putting this on .uap-page,
        which would make it the sticky containing box instead of the viewport). */
     overflow-x: hidden;
+    /* Reserve the scrollbar's width permanently so the page doesn't shift when
+       Radix dropdowns/dialogs briefly lock body scroll (which removes the
+       scrollbar and, without this, snaps the whole layout a few pixels sideways). */
+    scrollbar-gutter: stable;
 }
 ::-webkit-scrollbar {
     width: 10px;

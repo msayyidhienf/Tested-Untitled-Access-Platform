@@ -463,6 +463,9 @@ export default function SiteHeader() {
                                 <Link href="/profile">Profile</Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild className="focus:bg-[var(--uap-bg-hover)] focus:text-[var(--uap-text-primary)]">
+                                <Link href="/orders">Order History</Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild className="focus:bg-[var(--uap-bg-hover)] focus:text-[var(--uap-text-primary)]">
                                 <Link href="/settings/profile">Account Settings</Link>
                             </DropdownMenuItem>
                             {auth.user.role === 'admin' && (

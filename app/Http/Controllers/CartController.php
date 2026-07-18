@@ -11,6 +11,7 @@ use App\Models\Notification;
 use App\Models\WalletTransaction;
 use App\Services\AchievementService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -54,8 +55,14 @@ class CartController extends Controller
         return redirect()->route('cart.index')->with('status', "Removed \"{$game->title}\" from your cart.");
     }
 
-    public function checkout(): RedirectResponse
+    public function checkout(Request $request): RedirectResponse
     {
+        $request->validate([
+            'agree' => 'accepted',
+        ], [
+            'agree.accepted' => 'You must agree to the Terms of Service and Refund Policy before checking out.',
+        ]);
+
         $user = Auth::user();
         $userId = $user->id;
         $items = Cart::where('user_id', $userId)->with('game')->get();
@@ -85,7 +92,9 @@ class CartController extends Controller
             return redirect()->route('cart.index')->with('error', 'Insufficient Ucash balance. Please top up first.');
         }
 
-        DB::transaction(function () use ($user, $userId, $items, $total) {
+        $order = null;
+
+        DB::transaction(function () use ($user, $userId, $items, $total, &$order) {
             $order = Order::create([
                 'user_id' => $userId,
                 'total' => $total,
@@ -138,7 +147,7 @@ class CartController extends Controller
             AchievementService::check($user, $type);
         }
 
-        return redirect()->route('library.index')->with('status', 'Purchase complete! Your new games are in your library.');
+        return redirect()->route('orders.show', $order)->with('status', 'Purchase complete! Here is your invoice.');
     }
 
     private function itemsTotal($items): float
