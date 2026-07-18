@@ -66,6 +66,10 @@
 html {
     scrollbar-width: thin;
     scrollbar-color: rgba(184, 50, 50, 0.45) var(--uap-bg-deep);
+    /* Guards against accidental horizontal overflow without breaking
+       position:sticky on descendants (unlike putting this on .uap-page,
+       which would make it the sticky containing box instead of the viewport). */
+    overflow-x: hidden;
 }
 ::-webkit-scrollbar {
     width: 10px;
@@ -92,7 +96,6 @@ html {
     color: var(--uap-text-primary);
     font-family: 'Monda', sans-serif;
     min-height: 100vh;
-    overflow-x: hidden;
 }
 
 .uap-section-title {
