@@ -1,7 +1,7 @@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { type AppNotification, type SharedData } from '@/types';
+import { type AppNotification, type CartPreviewItem, type SharedData } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
-import { Bell, ChevronDown, Search, X } from 'lucide-react';
+import { Bell, ChevronDown, ShoppingCart, Search, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 const NAV_ITEMS = [
@@ -169,8 +169,119 @@ function StoreSearch() {
     );
 }
 
+function cartItemPrice(item: CartPreviewItem) {
+    const price = Number(item.game.price);
+    return item.game.discount > 0 ? price * (1 - item.game.discount / 100) : price;
+}
+
+function MiniCart({ cartCount, cartPreview }: { cartCount: number; cartPreview: CartPreviewItem[] }) {
+    const currentUrl = usePage().url;
+    const subtotal = cartPreview.reduce((sum, item) => sum + cartItemPrice(item), 0);
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <button
+                    style={{
+                        ...fontMonda,
+                        color: currentUrl.startsWith('/cart') ? 'var(--uap-accent)' : 'var(--uap-text-secondary)',
+                    }}
+                    className="relative flex h-full items-center gap-1.5 px-3.5 text-[13px] font-semibold hover:text-[var(--uap-text-primary)]"
+                >
+                    <ShoppingCart size={14} />
+                    Cart
+                    {cartCount > 0 && (
+                        <span
+                            style={{ ...fontMonda, background: 'var(--uap-accent-red)' }}
+                            className="absolute top-1 right-0.5 flex h-4 min-w-4 items-center justify-center px-1 text-[9px] font-bold text-white"
+                        >
+                            {cartCount}
+                        </span>
+                    )}
+                </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+                align="end"
+                className="w-80"
+                style={{
+                    ...fontMonda,
+                    background: 'var(--uap-bg-card)',
+                    border: '1px solid var(--uap-border)',
+                    color: 'var(--uap-text-primary)',
+                }}
+            >
+                <div className="px-2 py-1.5">
+                    <span className="text-xs font-semibold uppercase" style={{ color: 'var(--uap-text-dim)' }}>
+                        Your Cart {cartCount > 0 && `(${cartCount})`}
+                    </span>
+                </div>
+                <DropdownMenuSeparator style={{ background: 'var(--uap-border)' }} />
+                {cartPreview.length === 0 ? (
+                    <p className="px-2 py-6 text-center text-xs" style={{ color: 'var(--uap-text-secondary)' }}>
+                        Your cart is empty.
+                    </p>
+                ) : (
+                    <>
+                        <div className="max-h-80 overflow-y-auto">
+                            {cartPreview.map((item) => (
+                                <DropdownMenuItem
+                                    key={item.id}
+                                    asChild
+                                    className="gap-2.5 focus:bg-[var(--uap-bg-hover)] focus:text-[var(--uap-text-primary)]"
+                                >
+                                    <Link href={`/game/${item.game_id}`}>
+                                        <div
+                                            className="h-10 w-16 flex-shrink-0 overflow-hidden"
+                                            style={{ background: 'var(--uap-bg-deep)' }}
+                                        >
+                                            {item.game.image && (
+                                                <img
+                                                    src={`/uploads/games/${item.game_id}/${item.game.image}`}
+                                                    alt={item.game.title}
+                                                    className="h-full w-full object-cover"
+                                                />
+                                            )}
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="truncate text-xs font-semibold">{item.game.title}</p>
+                                            <p className="text-[11px]" style={{ color: 'var(--uap-text-dim)' }}>
+                                                {formatUcash(cartItemPrice(item))}
+                                            </p>
+                                        </div>
+                                    </Link>
+                                </DropdownMenuItem>
+                            ))}
+                        </div>
+                        {cartCount > cartPreview.length && (
+                            <p className="px-2 pt-1 text-[11px]" style={{ color: 'var(--uap-text-dim)' }}>
+                                +{cartCount - cartPreview.length} more item{cartCount - cartPreview.length !== 1 ? 's' : ''}
+                            </p>
+                        )}
+                        <DropdownMenuSeparator style={{ background: 'var(--uap-border)' }} />
+                        <div className="flex items-center justify-between px-2 py-1.5 text-sm font-semibold">
+                            <span>Subtotal</span>
+                            <span>{formatUcash(subtotal)}</span>
+                        </div>
+                        <div className="flex gap-1.5 px-2 pt-1 pb-1.5">
+                            <Link href="/cart" className="uap-btn uap-btn-outline uap-btn-sm flex-1 text-center">
+                                View Cart
+                            </Link>
+                            <button
+                                onClick={() => router.post('/cart/checkout')}
+                                className="uap-btn uap-btn-primary uap-btn-sm flex-1"
+                            >
+                                Checkout
+                            </button>
+                        </div>
+                    </>
+                )}
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+}
+
 export default function SiteHeader() {
-    const { auth, cartCount, ucashBalance, notifications, unreadNotificationCount } = usePage<SharedData>().props;
+    const { auth, cartCount, cartPreview, ucashBalance, notifications, unreadNotificationCount } = usePage<SharedData>().props;
     const currentUrl = usePage().url;
 
     return (
@@ -220,24 +331,7 @@ export default function SiteHeader() {
                     }}
                     className="flex h-[38px] items-center"
                 >
-                    <Link
-                        href="/cart"
-                        style={{
-                            ...fontMonda,
-                            color: currentUrl.startsWith('/cart') ? 'var(--uap-accent)' : 'var(--uap-text-secondary)',
-                        }}
-                        className="relative flex h-full items-center px-3.5 text-[13px] font-semibold hover:text-[var(--uap-text-primary)]"
-                    >
-                        Cart
-                        {cartCount > 0 && (
-                            <span
-                                style={{ ...fontMonda, background: 'var(--uap-accent-red)' }}
-                                className="absolute top-1 right-1.5 flex h-4 min-w-4 items-center justify-center px-1 text-[9px] font-bold text-white"
-                            >
-                                {cartCount}
-                            </span>
-                        )}
-                    </Link>
+                    <MiniCart cartCount={cartCount} cartPreview={cartPreview} />
 
                     {auth.user && ucashBalance !== null && (
                         <Link

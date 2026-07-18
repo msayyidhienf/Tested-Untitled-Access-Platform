@@ -41,6 +41,10 @@ class HandleInertiaRequests extends Middleware
     {
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
+        $cartItems = Auth::check()
+            ? Cart::where('user_id', Auth::id())->with('game:id,title,image,price,discount')->orderByDesc('added_at')->limit(6)->get()
+            : collect();
+
         return array_merge(parent::share($request), [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -49,6 +53,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'cartCount' => Auth::check() ? Cart::where('user_id', Auth::id())->count() : 0,
+            'cartPreview' => $cartItems,
             'ucashBalance' => Auth::check() ? $request->user()->ucash_balance : null,
             'midtrans' => [
                 'clientKey' => config('midtrans.client_key'),

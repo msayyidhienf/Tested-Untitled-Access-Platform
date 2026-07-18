@@ -31,11 +31,18 @@ export interface AppNotification {
     created_at: string;
 }
 
+export interface CartPreviewItem {
+    id: number;
+    game_id: number;
+    game: { id: number; title: string; image: string | null; price: string; discount: number };
+}
+
 export interface SharedData {
     name: string;
     quote: { message: string; author: string };
     auth: Auth;
     cartCount: number;
+    cartPreview: CartPreviewItem[];
     ucashBalance: string | null;
     notifications: AppNotification[];
     unreadNotificationCount: number;

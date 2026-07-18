@@ -19,14 +19,9 @@ class CartController extends Controller
 {
     public function index()
     {
-        $items = Cart::where('user_id', Auth::id())->with('game')->get();
+        $items = Cart::where('user_id', Auth::id())->with('game')->orderByDesc('added_at')->get();
 
-        $total = $items->sum(function ($item) {
-            $price = $item->game->price;
-            return $item->game->discount > 0
-                ? $price * (1 - $item->game->discount / 100)
-                : $price;
-        });
+        $total = $this->itemsTotal($items);
 
         return Inertia::render('cart/index', [
             'items' => $items,
@@ -36,21 +31,27 @@ class CartController extends Controller
 
     public function store(Game $game): RedirectResponse
     {
-        Cart::firstOrCreate([
-            'user_id' => Auth::id(),
+        $userId = Auth::id();
+
+        if (Library::where('user_id', $userId)->where('game_id', $game->id)->exists()) {
+            return back()->with('error', "You already own \"{$game->title}\".");
+        }
+
+        $created = Cart::firstOrCreate([
+            'user_id' => $userId,
             'game_id' => $game->id,
         ], [
             'added_at' => now(),
         ]);
 
-        return back();
+        return back()->with('status', $created->wasRecentlyCreated ? "Added \"{$game->title}\" to your cart." : "\"{$game->title}\" is already in your cart.");
     }
 
     public function destroy(Game $game): RedirectResponse
     {
         Cart::where('user_id', Auth::id())->where('game_id', $game->id)->delete();
 
-        return redirect()->route('cart.index');
+        return redirect()->route('cart.index')->with('status', "Removed \"{$game->title}\" from your cart.");
     }
 
     public function checkout(): RedirectResponse
@@ -60,15 +61,25 @@ class CartController extends Controller
         $items = Cart::where('user_id', $userId)->with('game')->get();
 
         if ($items->isEmpty()) {
-            return redirect()->route('cart.index');
+            return redirect()->route('cart.index')->with('error', 'Your cart is empty. Add a game before checking out.');
         }
 
-        $total = $items->sum(function ($item) {
-            $price = $item->game->price;
-            return $item->game->discount > 0
-                ? $price * (1 - $item->game->discount / 100)
-                : $price;
-        });
+        // Defensive re-check: a cart item may have been purchased through another
+        // session/tab since it was added. Never charge twice for the same game.
+        $ownedGameIds = Library::where('user_id', $userId)
+            ->whereIn('game_id', $items->pluck('game_id'))
+            ->pluck('game_id');
+
+        if ($ownedGameIds->isNotEmpty()) {
+            Cart::where('user_id', $userId)->whereIn('game_id', $ownedGameIds)->delete();
+            $items = $items->whereNotIn('game_id', $ownedGameIds)->values();
+
+            if ($items->isEmpty()) {
+                return redirect()->route('cart.index')->with('error', 'The games in your cart were already in your library, so they were removed. Nothing was charged.');
+            }
+        }
+
+        $total = $this->itemsTotal($items);
 
         if ($user->ucash_balance < $total) {
             return redirect()->route('cart.index')->with('error', 'Insufficient Ucash balance. Please top up first.');
@@ -112,7 +123,7 @@ class CartController extends Controller
                 'order_id' => $order->id,
             ]);
 
-            Cart::where('user_id', $userId)->delete();
+            Cart::where('user_id', $userId)->whereIn('game_id', $items->pluck('game_id'))->delete();
 
             Notification::create([
                 'user_id' => $userId,
@@ -127,6 +138,17 @@ class CartController extends Controller
             AchievementService::check($user, $type);
         }
 
-        return redirect()->route('library.index');
+        return redirect()->route('library.index')->with('status', 'Purchase complete! Your new games are in your library.');
+    }
+
+    private function itemsTotal($items): float
+    {
+        return (float) $items->sum(function ($item) {
+            $price = $item->game->price;
+
+            return $item->game->discount > 0
+                ? $price * (1 - $item->game->discount / 100)
+                : $price;
+        });
     }
 }

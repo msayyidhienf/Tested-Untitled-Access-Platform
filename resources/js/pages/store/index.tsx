@@ -1,7 +1,8 @@
 import SiteLayout from '@/components/site-layout';
-import { type Game } from '@/types';
-import { Head, Link } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { type Game, type SharedData } from '@/types';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Check, Plus } from 'lucide-react';
+import { useEffect, useState, type MouseEvent } from 'react';
 
 interface StoreIndexProps {
     mode: 'default' | 'filtered';
@@ -12,6 +13,8 @@ interface StoreIndexProps {
     newReleases?: Game[];
     onSaleGames?: Game[];
     freeGames?: Game[];
+    ownedGameIds: number[];
+    cartGameIds: number[];
 }
 
 function formatPrice(price: string | number) {
@@ -119,12 +122,37 @@ function Hero({ games }: { games: Game[] }) {
     );
 }
 
-function GameCard({ game }: { game: Game }) {
+function GameCard({ game, owned, inCart, isAuthed }: { game: Game; owned: boolean; inCart: boolean; isAuthed: boolean }) {
     const discounted = game.discount > 0 ? Number(game.price) * (1 - game.discount / 100) : null;
+    const [adding, setAdding] = useState(false);
+
+    const quickAdd = (e: MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (owned || inCart || adding) return;
+        setAdding(true);
+        router.post(`/cart/add/${game.id}`, {}, { preserveScroll: true, onFinish: () => setAdding(false) });
+    };
 
     return (
-        <Link href={`/game/${game.id}`} className="uap-card uap-game-card block p-3">
+        <Link href={`/game/${game.id}`} className="uap-card uap-game-card group relative block p-3">
             <div className="uap-game-card-img mb-2">{game.image && <img src={`/uploads/games/${game.id}/${game.image}`} alt={game.title} />}</div>
+
+            {isAuthed && (
+                <button
+                    onClick={quickAdd}
+                    title={owned ? 'Already in your library' : inCart ? 'Already in cart' : 'Add to cart'}
+                    className="absolute top-5 right-5 flex h-7 w-7 items-center justify-center opacity-0 transition-opacity group-hover:opacity-100"
+                    style={{
+                        background: 'rgba(0,0,0,0.7)',
+                        color: owned ? 'var(--uap-accent-green)' : inCart ? 'var(--uap-accent)' : 'var(--uap-text-primary)',
+                        opacity: owned || inCart ? 1 : undefined,
+                    }}
+                >
+                    {owned || inCart ? <Check size={14} /> : <Plus size={14} />}
+                </button>
+            )}
+
             <p className="uap-game-card-title">{game.title}</p>
             <p className="uap-game-card-genre mb-2">{game.genre}</p>
             <div className="flex items-center justify-between">
@@ -141,7 +169,7 @@ function GameCard({ game }: { game: Game }) {
     );
 }
 
-function GameSection({ title, games }: { title: string; games: Game[] }) {
+function GameSection({ title, games, ownedGameIds, cartGameIds, isAuthed }: { title: string; games: Game[]; ownedGameIds: number[]; cartGameIds: number[]; isAuthed: boolean }) {
     if (games.length === 0) return null;
 
     return (
@@ -149,14 +177,33 @@ function GameSection({ title, games }: { title: string; games: Game[] }) {
             <h2 className="uap-section-title">{title}</h2>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                 {games.map((game) => (
-                    <GameCard key={game.id} game={game} />
+                    <GameCard
+                        key={game.id}
+                        game={game}
+                        owned={ownedGameIds.includes(game.id)}
+                        inCart={cartGameIds.includes(game.id)}
+                        isAuthed={isAuthed}
+                    />
                 ))}
             </div>
         </section>
     );
 }
 
-export default function StoreIndex({ mode, filterTitle, games, heroGames, featuredGames, newReleases, onSaleGames, freeGames }: StoreIndexProps) {
+export default function StoreIndex({
+    mode,
+    filterTitle,
+    games,
+    heroGames,
+    featuredGames,
+    newReleases,
+    onSaleGames,
+    freeGames,
+    ownedGameIds,
+    cartGameIds,
+}: StoreIndexProps) {
+    const { auth } = usePage<SharedData>().props;
+    const isAuthed = !!auth.user;
     const heroSlides = heroGames && heroGames.length > 0 ? heroGames : (featuredGames ?? []).slice(0, 3);
 
     return (
@@ -175,14 +222,44 @@ export default function StoreIndex({ mode, filterTitle, games, heroGames, featur
                                 No games found{filterTitle ? ` in ${filterTitle}` : ''}.
                             </div>
                         ) : (
-                            <GameSection title={filterTitle ?? 'Games'} games={games ?? []} />
+                            <GameSection
+                                title={filterTitle ?? 'Games'}
+                                games={games ?? []}
+                                ownedGameIds={ownedGameIds}
+                                cartGameIds={cartGameIds}
+                                isAuthed={isAuthed}
+                            />
                         )
                     ) : (
                         <>
-                            <GameSection title="Featured & Recommended" games={featuredGames ?? []} />
-                            <GameSection title="New Releases" games={newReleases ?? []} />
-                            <GameSection title="Weekend Specials" games={onSaleGames ?? []} />
-                            <GameSection title="Free to Play" games={freeGames ?? []} />
+                            <GameSection
+                                title="Featured & Recommended"
+                                games={featuredGames ?? []}
+                                ownedGameIds={ownedGameIds}
+                                cartGameIds={cartGameIds}
+                                isAuthed={isAuthed}
+                            />
+                            <GameSection
+                                title="New Releases"
+                                games={newReleases ?? []}
+                                ownedGameIds={ownedGameIds}
+                                cartGameIds={cartGameIds}
+                                isAuthed={isAuthed}
+                            />
+                            <GameSection
+                                title="Weekend Specials"
+                                games={onSaleGames ?? []}
+                                ownedGameIds={ownedGameIds}
+                                cartGameIds={cartGameIds}
+                                isAuthed={isAuthed}
+                            />
+                            <GameSection
+                                title="Free to Play"
+                                games={freeGames ?? []}
+                                ownedGameIds={ownedGameIds}
+                                cartGameIds={cartGameIds}
+                                isAuthed={isAuthed}
+                            />
                         </>
                     )}
                 </div>

@@ -7,6 +7,7 @@ use App\Models\Cart;
 use App\Models\Library;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class GameController extends Controller
@@ -22,6 +23,7 @@ class GameController extends Controller
                 'mode' => 'filtered',
                 'filterTitle' => 'Search results for "'.$q.'"',
                 'games' => Game::where('title', 'like', "%{$q}%")->orderByDesc('created_at')->get(),
+                ...$this->ownershipProps(),
             ]);
         }
 
@@ -30,6 +32,7 @@ class GameController extends Controller
                 'mode' => 'filtered',
                 'filterTitle' => $genre,
                 'games' => Game::where('genre', $genre)->orderByDesc('created_at')->get(),
+                ...$this->ownershipProps(),
             ]);
         }
 
@@ -38,6 +41,7 @@ class GameController extends Controller
                 'mode' => 'filtered',
                 'filterTitle' => 'New Releases',
                 'games' => Game::orderByDesc('release_date')->limit(8)->get(),
+                ...$this->ownershipProps(),
             ]);
         }
 
@@ -46,6 +50,7 @@ class GameController extends Controller
                 'mode' => 'filtered',
                 'filterTitle' => 'On Sale',
                 'games' => Game::where('discount', '>', 0)->orderByDesc('discount')->get(),
+                ...$this->ownershipProps(),
             ]);
         }
 
@@ -54,6 +59,7 @@ class GameController extends Controller
                 'mode' => 'filtered',
                 'filterTitle' => 'Free to Play',
                 'games' => Game::where('is_free', true)->get(),
+                ...$this->ownershipProps(),
             ]);
         }
 
@@ -66,6 +72,7 @@ class GameController extends Controller
             'newReleases' => Game::orderByDesc('release_date')->limit(8)->get(),
             'onSaleGames' => Game::where('discount', '>', 0)->orderByDesc('discount')->get(),
             'freeGames' => Game::where('is_free', true)->get(),
+            ...$this->ownershipProps(),
         ]);
     }
 
@@ -96,5 +103,19 @@ class GameController extends Controller
             'inCart' => $userId ? Cart::where('user_id', $userId)->where('game_id', $game->id)->exists() : false,
             'inLibrary' => $userId ? Library::where('user_id', $userId)->where('game_id', $game->id)->exists() : false,
         ]);
+    }
+
+    /**
+     * Which games the current user already owns or already has in their cart,
+     * so store grids can render "Add to Cart" / "In Cart" / "Owned" correctly.
+     */
+    private function ownershipProps(): array
+    {
+        $userId = Auth::id();
+
+        return [
+            'ownedGameIds' => $userId ? Library::where('user_id', $userId)->pluck('game_id') : [],
+            'cartGameIds' => $userId ? Cart::where('user_id', $userId)->pluck('game_id') : [],
+        ];
     }
 }
