@@ -4,7 +4,6 @@
 
 /* ============================================================
    UAP DESIGN SYSTEM — ported from project lama (public/assets/css)
-   Prefixed --uap-* to avoid clashing with shadcn theme variables.
    ============================================================ */
 @font-face {
     font-family: 'Monda';
@@ -66,25 +65,10 @@
 html {
     scrollbar-width: thin;
     scrollbar-color: rgba(184, 50, 50, 0.45) var(--uap-bg-deep);
-    /* Guards against accidental horizontal overflow without breaking
-       position:sticky on descendants (unlike putting this on .uap-page,
-       which would make it the sticky containing box instead of the viewport). */
     overflow-x: hidden;
-    /* Reserve the scrollbar's width permanently so the page doesn't shift when
-       Radix dropdowns/dialogs briefly lock body scroll (which removes the
-       scrollbar and, without this, snaps the whole layout a few pixels sideways). */
     scrollbar-gutter: stable;
 }
-/* Radix (dropdown-menu/dialog) locks body scroll on open by injecting a fresh
-   <style> tag into <head> with `body[data-scroll-locked] { margin-right: Npx }`
-   compensation for the "missing" scrollbar. Since `html` above already
-   permanently reserves that space via scrollbar-gutter, Radix's compensation
-   is redundant and double-counts, shoving the whole page left every time any
-   popup opens. Radix's rule has the exact same specificity as a plain
-   `body[data-scroll-locked]` selector, and because its <style> tag is always
-   inserted *after* this stylesheet, it would win on source order alone even
-   with `!important` — so this selector is deliberately padded with `html` to
-   out-rank it regardless of injection order. */
+
 html body[data-scroll-locked] {
     margin-right: 0 !important;
     padding-right: 0 !important;
@@ -301,12 +285,12 @@ html body[data-scroll-locked] {
     background-size: cover;
     background-position: center;
 }
-/* Backdrop layer: fills the box with a blurred copy so no empty gaps show. */
+
+/* Backdrop layer: fills the box with a blurred copy. */
 .uap-hero-slide-bg-blur {
     filter: blur(28px) brightness(0.45);
     transform: scale(1.15);
 }
-/* Artwork fills a fixed 50/50 lane on the right — always full-bleed, no gaps. */
 .uap-hero-slide-art {
     position: absolute;
     inset: 0;
@@ -325,8 +309,7 @@ html body[data-scroll-locked] {
     position: relative;
     z-index: 2;
     padding: 0 clamp(20px, 3.5vw, 48px);
-    /* Never wider than the left lane the absolutely-positioned art starts at (50%),
-       so long titles can't grow the flex item out under the artwork. */
+
     width: 100%;
     max-width: min(560px, 50%);
     box-sizing: border-box;
@@ -740,14 +723,6 @@ html body[data-scroll-locked] {
     --color-sidebar-ring: var(--sidebar-ring);
 }
 
-/*
-  The default border color has changed to `currentColor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
 @layer base {
     *,
     ::after,

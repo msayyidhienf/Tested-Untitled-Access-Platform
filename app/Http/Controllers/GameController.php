@@ -106,8 +106,7 @@ class GameController extends Controller
     }
 
     /**
-     * Which games the current user already owns or already has in their cart,
-     * so store grids can render "Add to Cart" / "In Cart" / "Owned" correctly.
+     * Which games the current user already owns or already has in their cart.
      */
     private function ownershipProps(): array
     {
